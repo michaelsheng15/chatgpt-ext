@@ -1,0 +1,13 @@
+{
+  "manifest_version": 3,
+  "name": "ChatGPT Enhancer",
+  "version": "1.0",
+  "description": "Enhance your ChatGPT experience.",
+  "action" :{
+    "default_popup": "index.html",
+    "default_title": "Open"
+  },
+  "permissions": [
+    "scripting"
+  ]
+}
