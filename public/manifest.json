@@ -1,13 +1,22 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Enhancer",
+  "name": "ChatGPT Typing Tracker",
+  "description": "Display what a user types on ChatGPT",
   "version": "1.0",
-  "description": "Enhance your ChatGPT experience.",
-  "action" :{
-    "default_popup": "index.html",
-    "default_title": "Open"
-  },
   "permissions": [
-    "scripting"
-  ]
+    "storage"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://chat.openai.com/*", "*://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "index.html"
+  }
 }
