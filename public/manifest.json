@@ -1,13 +1,17 @@
 {
   "manifest_version": 3,
-  "name": "ChatGPT Enhancer",
-  "version": "1.0",
+  "name":  "ChatGPT Enhancer",
   "description": "Enhance your ChatGPT experience.",
-  "action" :{
-    "default_popup": "index.html",
-    "default_title": "Open"
-  },
-  "permissions": [
-    "scripting"
-  ]
+  "version": "1.0",
+  "permissions": ["storage"],
+  "content_scripts": [
+    {
+      "matches": ["*://chat.openai.com/*", "*://chatgpt.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_end"
+    }
+  ],
+  "action": {
+    "default_popup": "index.html"
+  }
 }
