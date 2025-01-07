@@ -2,28 +2,48 @@
   text-align: center;
   width: 100%;
   height: 100%;
-  max-width: 400px;   
-  max-height: 600px;  
-  margin: 0 auto;     
+  max-width: 400px;   /* Set max width to 400px for extension's popup */
+  max-height: 600px;  /* Set max height to 600px */
+  margin: 0 auto;     /* Center the app horizontally */
   padding: 10px;
-  overflow: hidden;   
+  overflow: hidden;   /* Hide overflow to prevent scrolling */
+}
+
+.App-logo {
+  height: 40vmin;
+  pointer-events: none;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .App-logo {
+    animation: App-logo-spin infinite 20s linear;
+  }
 }
 
 .App-header {
   background-color: #282c34;
   width: 400px; 
   height: 600px;
-  overflow: hidden;   
+  overflow: hidden;   /* Hide overflow to prevent scrolling */
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   font-size: calc(10px + 2vmin);
   color: white;
+  /* padding: 20px; */
+  box-sizing: border-box;  /* Ensure padding doesn't affect overall size */
 }
 
-.label-output {
-  margin-top: 10px;
-  font-size: 1.2rem;
+.App-link {
   color: #61dafb;
+}
+
+@keyframes App-logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
