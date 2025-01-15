@@ -88,16 +88,45 @@ function createFloatingPopup() {
   typedTextDisplay.style.fontSize = "1.25rem";  
   typedTextDisplay.style.fontWeight = "500";    
 
+  const submitButton = document.createElement("button");
+  
+  // Set button text
+  submitButton.textContent = "Submit";
+
+  // Style the button (optional)
+  submitButton.style.padding = "10px 20px";
+  submitButton.style.backgroundColor = "#542C9C";
+  submitButton.style.color = "white";
+  submitButton.style.border = "none";
+  submitButton.style.borderRadius = "8px";
+  submitButton.style.cursor = "pointer";
+  submitButton.style.fontSize = "1rem";
+  submitButton.style.marginTop = "10px";
+
+  // Attach click event listener
+  submitButton.addEventListener("click", () => {
+    sendToEngine();
+  });
 
   header.appendChild(h3);
   body.appendChild(typedTextDisplay);
   popup.appendChild(header);
   popup.appendChild(body);
+  popup.appendChild(submitButton)
 
 
   document.body.appendChild(popup);
 
   console.log("Floating popup added to the page.");
+}
+
+const sendToEngine = () => {
+  console.log("SUBMIT BUTTON PRESSED");
+  chrome.storage.local.get("typedText", (data) => {
+    const parsedText = data.typedText || "No text available";
+    //TODO: SEND TO ML ENGINE FROM HERE
+    console.log(parsedText);
+  });
 }
 
 
