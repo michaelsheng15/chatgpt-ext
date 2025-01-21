@@ -55,7 +55,7 @@
 //     findInputBoxWithRetry();
 //   }
 // })();
-
+let originalPrompt = "";
 const simpleMarkdown = {
   parse: (text) => {
     // Remove standalone dashes (---)
@@ -108,8 +108,10 @@ function findInputBoxWithRetry() {
           console.log("Successfully saved text:", typedText);
         }
       });
-
-      updatePopupContent();
+      if (originalPrompt == "") {
+        console.log("original prompt " + originalPrompt);
+        updatePopupContent();
+      }
     });
 
     createFloatingPopup();
@@ -323,22 +325,27 @@ const formatMarkdown = async (text) => {
 
 const sendToEngine = async () => {
   console.log("SUBMIT BUTTON PRESSED");
-
   try {
     const storageData = await new Promise((resolve) =>
       chrome.storage.local.get("typedText", resolve)
     );
 
-    const parsedText = storageData.typedText || "No text available";
-    console.log("Sending text:", parsedText);
+    originalPrompt= storageData.typedText || "No text available";
+    console.log("Sending text:", originalPrompt);
 
     // Update original prompt immediately
     const originalPromptDisplay = document.getElementById("original-prompt-display");
     if (originalPromptDisplay) {
-      originalPromptDisplay.textContent = parsedText;
+      originalPromptDisplay.textContent = originalPrompt;
     }
 
-    const data = await window.callEnhancerAPI(parsedText);
+  //COMMENT OUT TO SWITCH HARDCODE TO API
+    
+   // const data = await window.callEnhancerAPI(originalPrompt);
+   const data = {
+    enhancedPrompt: "This is a hardcoded enhanced prompt.",
+    answer: "This is a hardcoded answer."
+  };
 
     // Format both prompts before updating the UI
     const [formattedEnhancedPrompt, formattedAnswer] = await Promise.all([
@@ -368,6 +375,8 @@ const sendToEngine = async () => {
       dropdownButton.style.display = "block";
     }
 
+    injectEnhancedPrompt(data.enhancedPrompt);
+
   } catch (error) {
     console.error('Error in sendToEngine:', error);
     const answerSection = document.getElementById("answer-section");
@@ -386,10 +395,23 @@ function updatePopupContent() {
   chrome.storage.local.get("typedText", (data) => {
     const typedText = data.typedText || "Waiting for input...";
     const display = document.getElementById("original-prompt-display");
+    console.log("original prompt: " + originalPrompt);
     if (display) {
       display.textContent = typedText;
     }
   });
 }
+
+const injectEnhancedPrompt = (enhancedPrompt) => {
+  const inputBox = document.querySelector('.ProseMirror'); 
+  if (inputBox) {
+    inputBox.innerHTML = enhancedPrompt; 
+    const event = new Event('input', { bubbles: true });
+    inputBox.dispatchEvent(event);
+    console.log("Enhanced prompt injected:", enhancedPrompt);
+  } else {
+    console.error("ChatGPT input box not found. Cannot inject enhanced prompt.");
+  }
+};
 
 findInputBoxWithRetry();
