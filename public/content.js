@@ -136,7 +136,7 @@ function createFloatingPopup() {
   //chatgpt helped here a lot
   popup.style.position = "fixed";
   popup.style.top = "20px";
-  popup.style.right = "20px";
+  popup.style.left = "20px";
   popup.style.width = "100%";
   popup.style.maxWidth = "400px";
   popup.style.maxHeight = "600px";
@@ -207,6 +207,157 @@ function createFloatingPopup() {
     section.appendChild(display);
     return section;
   };
+
+  function initializeIslandAndSidebar() {
+    if (document.body) {
+      console.log("Body found. Adding island and sidebar.");
+  
+      const style = document.createElement('style');
+      style.textContent = `
+        #island {
+          position: fixed;
+          bottom: 20px;
+          right: 20px; /* Default position just to the left of the sidebar */
+          z-index: 1000;
+          transition: right 0.3s ease-in-out;
+        }
+  
+        #island button {
+          padding: 10px;
+          border: none;
+          background-color: #542C9C;
+          color: white;
+          border-radius: 8px;
+          cursor: pointer;
+          font-size: 1rem;
+          transition: background-color 0.2s;
+          width: 100%;
+          max-width: 150px;
+          text-align: center;
+        }
+  
+        #island button:hover {
+          background-color: #6b3bc4;
+        }
+  
+        #sidebar {
+          position: fixed;
+          top: 0;
+          right: 0;
+          width: 300px;
+          height: 100%;
+          background: #f4f4f4;
+          box-shadow: -2px 0 5px rgba(0, 0, 0, 0.2);
+          transform: translateX(100%);
+          transition: transform 0.3s ease-in-out;
+          z-index: 999;
+        }
+  
+        #sidebar-content {
+          padding: 20px;
+        }
+  
+        #close-sidebar {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        padding: 10px 20px;
+        border: none;
+        background: #dc3545;
+        color: white;
+        border-radius: 8px;
+        cursor: pointer;
+        font-size: 1rem;
+        transition: background-color 0.2s;
+      }
+  
+        #close-sidebar:hover {
+          background-color: #e74c3c;
+        }
+      `;
+      document.head.appendChild(style);
+  
+      const island = document.createElement('div');
+      island.id = 'island';
+      island.innerHTML = `<button id="optimize-button">Optimize</button>`;
+      document.body.appendChild(island);
+  
+      const sidebar = document.createElement('div');
+      sidebar.id = 'sidebar';
+      sidebar.innerHTML = `
+        <div id="sidebar-content">
+          <h2>Insights</h2>
+          <button id="close-sidebar">Close</button>
+          <p>This is hardcoded Sidebar text.</p>
+        </div>
+      `;
+      document.body.appendChild(sidebar);
+  
+      const optimizeButton = document.getElementById('optimize-button');
+      const closeButton = document.getElementById('close-sidebar');
+
+      closeButton.onclick = () => {
+        sidebar.style.transform = 'translateX(100%)';
+        island.style.right = '20px';
+        optimizeButton.textContent = 'Optimize';
+        updateButtonBehavior();
+      };
+  
+      const updateButtonBehavior = () => {
+        chrome.storage.local.get('alwaysShowInsights', (data) => {
+          const alwaysShowInsights = !!data.alwaysShowInsights;
+  
+          if (alwaysShowInsights) {
+            optimizeButton.textContent = 'Optimize';
+            optimizeButton.onclick = () => {
+              sidebar.style.transform = 'translateX(0)';
+              island.style.right = '320px';
+              optimizeButton.textContent = 'Close Sidebar';
+  
+              optimizeButton.onclick = () => {
+                sidebar.style.transform = 'translateX(100%)';
+                island.style.right = '20px';
+                optimizeButton.textContent = 'Optimize';
+                updateButtonBehavior();
+              };
+            };
+          } else {
+            optimizeButton.textContent = 'Optimize';
+            optimizeButton.onclick = () => {
+              optimizeButton.textContent = 'Show Sidebar';
+  
+              optimizeButton.onclick = () => {
+                sidebar.style.transform = 'translateX(0)';
+                island.style.right = '320px';
+                optimizeButton.textContent = 'Close Sidebar';
+
+                optimizeButton.onclick = () => {
+                  sidebar.style.transform = 'translateX(100%)';
+                  island.style.right = '20px';
+                  optimizeButton.textContent = 'Optimize';
+                  updateButtonBehavior();
+                };
+              };
+            };
+          }
+        });
+      };
+  
+      updateButtonBehavior();
+  
+      chrome.storage.onChanged.addListener((changes, namespace) => {
+        if (changes.alwaysShowInsights && namespace === 'local') {
+          console.log('alwaysShowInsights changed:', changes.alwaysShowInsights.newValue);
+          updateButtonBehavior(); 
+        }
+      });
+    } else {
+      console.warn("Body not found. Retrying...");
+      setTimeout(initializeIslandAndSidebar, 500);
+    }
+  }
+  
+  initializeIslandAndSidebar();
 
   const originalPromptSection = createSection("Original Prompt:", "original-prompt-display");
   const enhancedPromptSection = createSection("Enhanced Prompt:", "enhanced-prompt-display", true, "enhanced-prompt-section");
@@ -415,3 +566,4 @@ const injectEnhancedPrompt = (enhancedPrompt) => {
 };
 
 findInputBoxWithRetry();
+
