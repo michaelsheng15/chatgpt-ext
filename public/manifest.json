@@ -12,7 +12,8 @@
   "web_accessible_resources": [
     {
       "resources": [
-        "lib/marked.js"
+        "lib/marked.js", "asset-manifest.json",
+        "static/js/*.js", "static/css/*.css"
       ],
       "matches": [
         "https://*/*",
