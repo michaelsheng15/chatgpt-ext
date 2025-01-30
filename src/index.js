@@ -1,6 +1,7 @@
+//This is what is injected into the container, thus rendering the app
+
 import React from 'react';
 import ReactDOM from 'react-dom/client';
-import './index.css';
 import App from './App';
 
 function mountApp() {

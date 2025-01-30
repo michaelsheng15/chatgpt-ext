@@ -1,0 +1,21 @@
+/* popup.css - Styles for settings popup UI */
+
+body {
+    font-family: Arial, sans-serif;
+    padding: 10px;
+    width: 220px;
+    background: #000;
+    color: #fff;
+}
+
+.toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+input[type="checkbox"] {
+    width: 20px;
+    height: 20px;
+}

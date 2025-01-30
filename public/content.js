@@ -1,25 +1,38 @@
-// Inject a container for the React app
-const appContainer = document.createElement('div');
-appContainer.id = 'react-app-container';
-appContainer.style.position = 'fixed';
-appContainer.style.bottom = '20px';
-appContainer.style.right = '20px';
-appContainer.style.zIndex = '10000'; // Ensure it's above other elements
-appContainer.style.width = 'auto'; // Automatically fit content
-appContainer.style.height = 'auto'; // Automatically fit content
-document.body.appendChild(appContainer);
+// content.js - Injects the React app into ChatGPT and syncs settings from the popup using postMessage.
 
-// Dynamically load the React app's main JavaScript bundle using asset-manifest.json
-fetch(chrome.runtime.getURL('asset-manifest.json'))
-  .then((response) => response.json())
-  .then((manifest) => {
-    const mainJs = manifest['files']['main.js']; // Dynamically find the main JS file
-    const script = document.createElement('script');
-    script.src = chrome.runtime.getURL(mainJs);
-    script.type = 'module'; // Modern React builds use modules
-    document.body.appendChild(script);
-    console.log('React app script injected:', script.src);
-  })
-  .catch((error) => {
-    console.error('Failed to load React app:', error);
-  });
+function injectReactApp() {
+    const appContainer = document.createElement("div");
+    appContainer.id = "react-app-container";
+    document.body.appendChild(appContainer);
+
+
+//Took forever to figure out, shoutout chatgpt and stack overflow, this code here let's us inject our react app via the main<hash>.js file that is created at build
+    fetch(chrome.runtime.getURL("asset-manifest.json"))
+        .then((response) => response.json())
+        .then((manifest) => {
+            const script = document.createElement("script");
+            script.src = chrome.runtime.getURL(manifest["files"]["main.js"]);
+            script.type = "module";
+            document.body.appendChild(script);
+        })
+        .catch((error) => console.error("Failed to inject React app:", error));
+}
+
+function sendSettingsToReact() {
+    chrome.storage.sync.get("alwaysShowInsights", (data) => {
+        window.postMessage({ type: "SETTINGS_UPDATE", alwaysShowInsights: data.alwaysShowInsights ?? true }, "*");
+    });
+}
+
+chrome.storage.onChanged.addListener((changes) => {
+    if (changes.alwaysShowInsights) {
+        window.postMessage({ type: "SETTINGS_UPDATE", alwaysShowInsights: changes.alwaysShowInsights.newValue }, "*");
+    }
+});
+
+chrome.storage.sync.set({ firstRun: true }, () => {
+    console.log("Page loaded: firstRun reset to true.");
+});
+
+injectReactApp();
+sendSettingsToReact();

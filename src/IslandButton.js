@@ -1,39 +1,55 @@
-import React from 'react';
+// IslandButton.js - island button that handles all user input.
 
-function IslandButton({ alwaysShowInsights, isSidebarOpen, setIsSidebarOpen }) {
-  const handleClick = () => {
-    if (isSidebarOpen) {
-      setIsSidebarOpen(false);
-    } else if (alwaysShowInsights) {
-      setIsSidebarOpen(true);
-    }
-  };
+import React, { useState } from "react";
 
-  const handleSecondaryClick = () => {
-    setIsSidebarOpen(true);
-  };
+function IslandButton({ alwaysShowInsights, isSidebarVisible, setIsSidebarVisible, sendToEngine }) {
+    const [buttonText, setButtonText] = useState("Optimize");
 
-  return (
-    <div id="island" style={{ position: 'fixed', bottom: '20px', right: isSidebarOpen ? '320px' : '20px' }}>
-      <button
-        style={{
-          padding: '10px',
-          backgroundColor: '#542C9C',
-          color: 'white',
-          borderRadius: '8px',
-          border: 'none',
-          cursor: 'pointer',
-        }}
-        onClick={isSidebarOpen || alwaysShowInsights ? handleClick : handleSecondaryClick}
-      >
-        {isSidebarOpen
-          ? 'Close Sidebar'
-          : alwaysShowInsights
-          ? 'Optimize'
-          : 'Show Sidebar'}
-      </button>
-    </div>
-  );
+    const handleClick = () => {
+        if (isSidebarVisible) {
+            setIsSidebarVisible(false);
+            setButtonText("Optimize");
+        } else {
+            if (alwaysShowInsights) {
+                setIsSidebarVisible(true);
+                sendToEngine();
+            } else {
+                if (buttonText === "Optimize") {
+                    sendToEngine();
+                    setButtonText("Show Insights");
+                } else {
+                    setIsSidebarVisible(true);
+                }
+            }
+        }
+    };
+
+    return (
+        <div
+            style={{
+                position: "fixed",
+                bottom: "20px",
+                right: isSidebarVisible ? "320px" : "20px",
+                transition: "right 0.3s ease-in-out",
+                zIndex: "10000",
+            }}
+        >
+            <button
+                style={{
+                    padding: "10px",
+                    backgroundColor: "#808080",
+                    color: "#fff",
+                    borderRadius: "5px",
+                    border: "none",
+                    cursor: "pointer",
+                    transition: "background-color 0.3s ease-in-out",
+                }}
+                onClick={handleClick}
+            >
+                {isSidebarVisible ? "Close Sidebar" : buttonText}
+            </button>
+        </div>
+    );
 }
 
 export default IslandButton;

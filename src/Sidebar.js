@@ -1,48 +1,59 @@
-import React from 'react';
+// Sidebar.js - Slides in and out, includes a close button, displays the information
 
-function Sidebar({ isOpen, onClose }) {
-  return (
-    <div
-      id="sidebar"
-      style={{
-        position: 'fixed',
-        top: '0',
-        right: isOpen ? '0' : '-300px',
-        width: '300px',
-        height: '100%',
-        background: '#f4f4f4',
-        boxShadow: '-2px 0 5px rgba(0, 0, 0, 0.2)',
-        transition: 'transform 0.3s ease-in-out',
-        transform: isOpen ? 'translateX(0)' : 'translateX(100%)',
-        zIndex: '999',
-      }}
-    >
-      <div
-        style={{
-          padding: '20px',
-        }}
-      >
-        <h2>Sidebar</h2>
-        <p>This is your sidebar content.</p>
-        <button
-          onClick={onClose}
-          style={{
-            position: 'absolute',
-            top: '10px',
-            right: '10px',
-            padding: '10px 20px',
-            backgroundColor: '#dc3545',
-            color: 'white',
-            border: 'none',
-            borderRadius: '8px',
-            cursor: 'pointer',
-          }}
+import React from "react";
+
+function Sidebar({ isOpen, onClose, originalPrompt, answer }) {
+    return (
+        <div
+            style={{
+                position: "fixed",
+                top: "0",
+                right: isOpen ? "0" : "-300px",
+                width: "300px",
+                height: "100%",
+                background: "#d3d3d3",
+                color: "#000",
+                boxShadow: "-2px 0 5px rgba(0, 0, 0, 0.2)",
+                transition: "transform 0.3s ease-in-out",
+                transform: isOpen ? "translateX(0)" : "translateX(100%)",
+                zIndex: "999",
+                padding: "20px",
+                display: "flex",
+                flexDirection: "column",
+                gap: "10px",
+            }}
         >
-          Close Sidebar
-        </button>
-      </div>
-    </div>
-  );
+            <h2>Sidebar</h2>
+            <div>
+                <h3>Original Prompt</h3>
+                <p style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
+                    {originalPrompt || "No prompt available."}
+                </p>
+            </div>
+            <div>
+                <h3>Enhanced Response</h3>
+                <p style={{ whiteSpace: "pre-wrap", wordWrap: "break-word" }}>
+                    {answer || "No response available."}
+                </p>
+            </div>
+            <button
+                onClick={onClose}
+                style={{
+                    position: "absolute",
+                    top: "10px",
+                    right: "10px",
+                    padding: "5px 10px",
+                    fontSize: "1.2rem",
+                    backgroundColor: "transparent",
+                    color: "#000",
+                    border: "none",
+                    cursor: "pointer",
+                }}
+            >
+                X
+            </button>
+        </div>
+    );
 }
 
 export default Sidebar;
