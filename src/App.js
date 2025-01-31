@@ -20,26 +20,37 @@ function App() {
     }, []);
 
     const sendToEngine = async () => {
-        console.log("Button clicked")
-        const prompt = scrape();        //****NOTE: only scraping when the button is clicked
-        if (!prompt) {
-            console.log("No input found");
-            return;
-        }   
+        try {
+            console.log("Button clicked");
+            const prompt = scrape();
+            if (!prompt) {
+                console.log("No input found");
+                return;
+            }
 
-        setOriginalPrompt(prompt);
-        console.log("setting original prompt to " + prompt);
+            setOriginalPrompt(prompt);
+            console.log("setting original prompt to " + prompt);
 
+            // Make sure window.callEnhancerAPI exists
+            if (typeof window.callEnhancerAPI !== 'function') {
+                throw new Error('Enhancer API not initialized');
+            }
 
-        // const data = {
-        //     enhancedPrompt: "This is a hardcoded enhanced prompt.",
-        //     answer: "This is a hardcoded answer."
-        // };
+            // const data = {
+            //     enhancedPrompt: "This is a hardcoded enhanced prompt.",
+            //     answer: "This is a hardcoded answer."
+            // };
 
-        const data = await window.callEnhancerAPI(originalPrompt);
+            const data = await window.callEnhancerAPI(prompt);
 
-        setAnswer(data.answer);
-        injectEnhancedPrompt(data.enhancedPrompt);
+            console.log(data);
+
+            setAnswer(data.answer);
+            injectEnhancedPrompt(data.enhancedPrompt);
+        } catch (error) {
+            console.error('Error in sendToEngine:', error);
+            // Handle error appropriately in your UI
+        }
     };
 
     return (

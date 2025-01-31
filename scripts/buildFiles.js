@@ -14,7 +14,7 @@ if (!fs.existsSync(buildDir)) {
 srcFiles.forEach(file => {
   const srcPath = path.join(srcDir, file);
   const destPath = path.join(buildDir, file);
-  
+
   if (fs.existsSync(srcPath)) {
     fs.copyFileSync(srcPath, destPath);
     console.log(`${file} has been copied to the build directory.`);

@@ -7,14 +7,18 @@
     "storage"
   ],
   "host_permissions": [
-    "http://localhost:5000/*",  "https://chat.openai.com/*",
-  "https://chatgpt.com/*"
+    "http://localhost:5000/*",
+    "https://chat.openai.com/*",
+    "https://chatgpt.com/*"
   ],
   "web_accessible_resources": [
     {
       "resources": [
-        "lib/marked.js", "asset-manifest.json",
-        "static/js/*.js", "static/css/*.css"
+        "api.js",
+        "lib/marked.js",
+        "asset-manifest.json",
+        "static/js/*.js",
+        "static/css/*.css"
       ],
       "matches": [
         "https://*/*",

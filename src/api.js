@@ -1,21 +1,17 @@
 window.callEnhancerAPI = async (prompt) => {
-    try {
-        const response = await fetch('http://localhost:5000/enhancer', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({ prompt: prompt })
-        });
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        return data;
-    } catch (error) {
-        console.error('Error:', error);
-        throw error;
-    }
+    return new Promise((resolve, reject) => {
+        window.postMessage({ type: 'ENHANCE_PROMPT', prompt }, '*');
+
+        const messageHandler = (event) => {
+            if (event.data.type === 'ENHANCE_PROMPT_RESPONSE') {
+                window.removeEventListener('message', messageHandler);
+                resolve(event.data.data);
+            } else if (event.data.type === 'ENHANCE_PROMPT_ERROR') {
+                window.removeEventListener('message', messageHandler);
+                reject(new Error(event.data.error));
+            }
+        };
+
+        window.addEventListener('message', messageHandler);
+    });
 };
