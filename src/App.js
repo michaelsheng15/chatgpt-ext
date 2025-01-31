@@ -30,10 +30,13 @@ function App() {
         setOriginalPrompt(prompt);
         console.log("setting original prompt to " + prompt);
 
-        const data = {
-            enhancedPrompt: "This is a hardcoded enhanced prompt.",
-            answer: "This is a hardcoded answer."
-        };
+
+        // const data = {
+        //     enhancedPrompt: "This is a hardcoded enhanced prompt.",
+        //     answer: "This is a hardcoded answer."
+        // };
+
+        const data = await window.callEnhancerAPI(originalPrompt);
 
         setAnswer(data.answer);
         injectEnhancedPrompt(data.enhancedPrompt);
