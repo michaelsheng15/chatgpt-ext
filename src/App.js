@@ -1,46 +1,60 @@
-import React, { useEffect, useState } from 'react';
-import './App.css';
+// App.js - Manages the floating button, sidebar, and api call when the button is clicked.
+
+import React, { useState, useEffect } from "react";
+import IslandButton from "./IslandButton";
+import Sidebar from "./Sidebar";
+import { scrape, injectEnhancedPrompt } from "./utils";
 
 function App() {
-  const [alwaysShowInsights, setAlwaysShowInsights] = useState(true); // I want this to default to true, not sure why it doesn't work  -Donovan
+    const [alwaysShowInsights, setAlwaysShowInsights] = useState(true);
+    const [isSidebarVisible, setIsSidebarVisible] = useState(false);
+    const [originalPrompt, setOriginalPrompt] = useState("");
+    const [answer, setAnswer] = useState("");
 
-  useEffect(() => {
-    chrome.storage.local.get('alwaysShowInsights', (data) => {
-      if (data.alwaysShowInsights !== undefined) {
-        setAlwaysShowInsights(data.alwaysShowInsights);
-      } else {
-        chrome.storage.local.set({ alwaysShowInsights: true }, () => {      //using chrome storage to save the setting, there might be a better way tbh  -Donovan
-          console.log('Default value set: alwaysShowInsights = true');
+    useEffect(() => {
+        window.addEventListener("message", (event) => {
+            if (event.data?.type === "SETTINGS_UPDATE") {
+                setAlwaysShowInsights(event.data.alwaysShowInsights);
+            }
         });
-        setAlwaysShowInsights(true); 
-      }
-    });
-  }, []);
+    }, []);
 
-  const handleToggleChange = (e) => {
-    const newValue = e.target.checked;
-    setAlwaysShowInsights(newValue);
+    const sendToEngine = async () => {
+        console.log("Button clicked")
+        const prompt = scrape();        //****NOTE: only scraping when the button is clicked
+        if (!prompt) {
+            console.log("No input found");
+            return;
+        }   
 
-    chrome.storage.local.set({ alwaysShowInsights: newValue }, () => {
-      console.log(`Always Show Insights updated to: ${newValue}`);
-    });
-  };
+        setOriginalPrompt(prompt);
+        console.log("setting original prompt to " + prompt);
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <h2>Settings</h2>
-        <label className="toggle-label">
-          <input
-            type="checkbox"
-            checked={alwaysShowInsights}
-            onChange={handleToggleChange}
-          />
-          Always Show Insights
-        </label>
-      </header>
-    </div>
-  );
+        const data = {
+            enhancedPrompt: "This is a hardcoded enhanced prompt.",
+            answer: "This is a hardcoded answer."
+        };
+
+        setAnswer(data.answer);
+        injectEnhancedPrompt(data.enhancedPrompt);
+    };
+
+    return (
+        <div>
+            <IslandButton
+                alwaysShowInsights={alwaysShowInsights}
+                isSidebarVisible={isSidebarVisible}
+                setIsSidebarVisible={setIsSidebarVisible}
+                sendToEngine={sendToEngine}
+            />
+            <Sidebar
+                isOpen={isSidebarVisible}
+                onClose={() => setIsSidebarVisible(false)}
+                originalPrompt={originalPrompt}
+                answer={answer}
+            />
+        </div>
+    );
 }
 
 export default App;
