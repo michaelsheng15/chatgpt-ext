@@ -1,32 +1,55 @@
-// utils.js - Contains helper functions
+// utils.js - Contains helper functions.
+
 
 export const scrape = () => {
     const inputBox = document.querySelector(".ProseMirror");
     if (!inputBox) {
-        console.error("ChatGPT input box not found.");
-        return "";
+      console.error("ChatGPT input box not found.");
+      return "";
     }
     return inputBox.innerText.trim();
-};
-
-
-export const injectEnhancedPrompt = (enhancedPrompt) => {
+  };
+  
+  export const injectPrompt = (enhancedPrompt) => {
     const inputBox = document.querySelector(".ProseMirror");
     if (inputBox) {
-        inputBox.innerHTML = enhancedPrompt;
-        const event = new Event("input", { bubbles: true });
-        inputBox.dispatchEvent(event);
-        console.log("Enhanced prompt injected:", enhancedPrompt);
+      inputBox.innerHTML = enhancedPrompt;
+      inputBox.dispatchEvent(new Event("input", { bubbles: true }));
     } else {
-        console.error("ChatGPT input box not found. Cannot inject enhanced prompt.");
+      console.error("ChatGPT input box not found. Cannot inject enhanced prompt.");
     }
-};
+  };
+  
 
+  //TEMPORARY FUNCTIONS TO SIMULATE API CALL
+  export const fetchNodeData = async (nodeName) => {
+    console.log(`[fetchNodeData] Fetching data for ${nodeName}...`);
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const data = {
+          changeText: `This is the change for ${nodeName}.`,
+          reasonText: `Reason why ${nodeName} made this change.`,
+        };
+        console.log(`[fetchNodeData] Data for ${nodeName}:`, data);
+        resolve(data);
+      }, 5000);   //timeout to simulate, DELETE eventually
+    });
+  };
 
-
-
-
-
+  export const fetchScoreData = async () => {
+    console.log("[fetchScoreData] Fetching score data...");
+    return new Promise((resolve) => {
+      setTimeout(() => {
+        const data = {
+          score: 55,
+          scoreRationale: "Your prompt was clear but could be more detailed. (Hardcoded)",
+          improvementTips: "Consider adding more context and specifics to your prompt. (HardCoded)",
+        };
+        console.log("[fetchScoreData] Data:", data);
+        resolve(data);
+      }, 3000);    //timeout to simulate, DELETE eventually
+    });
+  }
 
 
 
