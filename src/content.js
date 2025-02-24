@@ -48,13 +48,15 @@ injectScript('api.js');
 window.addEventListener('message', async (event) => {
     if (event.data.type === 'ENHANCE_PROMPT') {
         try {
-            const response = await fetch('http://localhost:5000/enhancer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: event.data.prompt })
-            });
+            // const response = await fetch('http://localhost:5000/enhancer', {
+            //     method: 'POST',
+            //     headers: {
+            //         'Content-Type': 'application/json',
+            //     },
+            //     body: JSON.stringify({ prompt: event.data.prompt })
+            // });
+
+            const response = JSON.stringify({ prompt: "THIS IS A SAMPLE PROMPT" })
 
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);

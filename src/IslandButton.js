@@ -37,9 +37,9 @@ function IslandButton({ alwaysShowInsights, isSidebarVisible, setIsSidebarVisibl
             <button
                 style={{
                     padding: "10px",
-                    backgroundColor: "#808080",
+                    backgroundColor: "#007DE0",
                     color: "#fff",
-                    borderRadius: "5px",
+                    borderRadius: "10px",
                     border: "none",
                     cursor: "pointer",
                     transition: "background-color 0.3s ease-in-out",
