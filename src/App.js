@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import IslandButton from "./IslandButton";
 import Sidebar from "./Sidebar";
-import SocketDebugger from "./SocketDebugger"; // Import the debugger (temporary)
 import {
   scrape,
   injectPrompt,
@@ -18,150 +17,77 @@ function App() {
   const [optimizationRun, setOptimizationRun] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [nodeStatusList, setNodeStatusList] = useState([]);
-  const [sessionId] = useState(() => `session-${Date.now()}`);
-  const [socket, setSocket] = useState(null);
-  const [debugMode, setDebugMode] = useState(true); // Toggle for debugger visibility
+  const [sessionId] = useState(() => window.enhancerAPI?.getSessionId() || `session-${Date.now()}`);
 
-  // Direct WebSocket connection
+  // Listen for node updates from background script
   useEffect(() => {
-    console.log("🚀 Initializing WebSocket connection...");
+    console.log("🚀 Setting up node update listener...");
 
-    // Create a function to load socket.io if needed
-    const loadSocketIO = () => {
-      return new Promise((resolve, reject) => {
-        if (typeof io !== 'undefined') {
-          console.log("✅ Socket.io already loaded");
-          resolve();
-          return;
-        }
+    // Skip if enhancerAPI is not available
+    if (!window.enhancerAPI || !window.enhancerAPI.onNodeUpdate) {
+      console.error("❌ enhancerAPI.onNodeUpdate not available");
+      return;
+    }
 
-        console.log("❌ Socket.io not available - loading it directly");
-        const script = document.createElement('script');
-        script.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
-        
-        script.onload = () => {
-          console.log("✅ Socket.io loaded via script");
-          resolve();
-        };
-        
-        script.onerror = (err) => {
-          console.error("Failed to load Socket.io:", err);
-          reject(err);
-        };
-        
-        document.head.appendChild(script);
+    // Set up listener for node updates
+    const removeListener = window.enhancerAPI.onNodeUpdate((nodeName, nodeData) => {
+      console.log("📦 NODE COMPLETED EVENT RECEIVED:", nodeName);
+
+      // Add to status list
+      setNodeStatusList(prev => {
+        const newList = [...prev, {
+          time: new Date().toLocaleTimeString(),
+          node_name: nodeName,
+          data: nodeData
+        }];
+        console.log("Updated node list, now contains:", newList.length, "items");
+        return newList;
       });
-    };
 
-    // Initialize socket after ensuring Socket.io is loaded
-    const initializeSocket = async () => {
-      try {
-        await loadSocketIO();
-        
-        console.log("🔌 Creating Socket.io connection to http://localhost:5000");
-        const socketInstance = io("http://localhost:5000", {
-          transports: ["websocket"],
-          reconnection: true,
-          reconnectionAttempts: 5,
-          timeout: 10000
-        });
+      // Handle specific nodes
+      if (nodeName === "PromptEvaluationNode" && nodeData) {
+        if (nodeData.overall_score) {
+          const newScore = Math.round(nodeData.overall_score * 10);
+          console.log("📊 Setting score:", newScore);
+          setScore(newScore);
 
-        socketInstance.on("connect", () => {
-          console.log("✅ WebSocket CONNECTED with ID:", socketInstance.id);
-          // Send a test message to verify connection
-          socketInstance.emit("test_connection", { 
-            message: "Hello from frontend", 
-            sessionId,
-            timestamp: Date.now()
-          });
-        });
-
-        socketInstance.on("connect_error", (err) => {
-          console.error("❌ WebSocket CONNECTION ERROR:", err);
-        });
-
-        socketInstance.on("disconnect", (reason) => {
-          console.log("🔌 WebSocket DISCONNECTED:", reason);
-        });
-
-        // Listen for ANY event (debugging)
-        socketInstance.onAny((eventName, ...args) => {
-          console.log(`📡 SOCKET EVENT [${eventName}]:`, args);
-        });
-
-        socketInstance.on("node_completed", (data) => {
-          console.log("📦 NODE COMPLETED EVENT:", data);
-
-          // Add to status list
-          setNodeStatusList(prev => {
-            const newList = [...prev, {
-              time: new Date().toLocaleTimeString(),
-              node_name: data.node_name,
-              data: data.node_data
-            }];
-            console.log("Updated node list:", newList);
-            return newList;
-          });
-
-          // Handle specific nodes
-          if (data.node_name === "PromptEvaluationNode" && data.node_data) {
-            if (data.node_data.overall_score) {
-              const newScore = Math.round(data.node_data.overall_score * 10);
-              console.log("📊 Setting score:", newScore);
-              setScore(newScore);
-              
-              // Also set rationale and tips if available
-              if (data.node_data.scores) {
-                const rationale = `Scores: ${Object.entries(data.node_data.scores)
-                  .map(([dim, score]) => `${dim}: ${score}/10`)
-                  .join(', ')}`;
-                setScoreRationale(rationale);
-              }
-              
-              if (data.node_data.suggestions_count) {
-                setImprovementTips(`${data.node_data.suggestions_count} improvement suggestions available.`);
-              }
-            }
+          // Set rationale and tips
+          if (nodeData.scores) {
+            setScoreRationale(`Scores: ${Object.entries(nodeData.scores)
+              .map(([dim, score]) => `${dim}: ${score}/10`)
+              .join(', ')}`);
           }
 
-          if (data.node_name === "FinalAnswerNode") {
-            console.log("🏁 Final node completed");
-            setIsLoading(false);
-          }
-        });
-
-        setSocket(socketInstance);
-        console.log("Socket instance set:", socketInstance.id);
-
-        return socketInstance;
-      } catch (err) {
-        console.error("❌ Error initializing socket:", err);
-        return null;
+          setImprovementTips(`${nodeData.suggestions_count || 0} improvement suggestions available.`);
+        }
       }
-    };
 
-    // Execute the initialization
-    const socketInstance = initializeSocket();
-    
-    // Cleanup function
+      if (nodeName === "FinalAnswerNode") {
+        console.log("🏁 Final node completed");
+        setIsLoading(false);
+      }
+    });
+
+    // Clean up listener when component unmounts
     return () => {
-      if (socket) {
-        console.log("Disconnecting socket on cleanup");
-        socket.disconnect();
-      }
+      console.log("Removing node update listener");
+      removeListener();
     };
-  }, []); // Only run once on mount
+  }, []);
 
+  // Listen for settings updates
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === "SETTINGS_UPDATE") {
         setAlwaysShowInsights(event.data.alwaysShowInsights);
       }
     };
+
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
+  // Main function to send prompt to backend
   const sendToEngine = async () => {
     setIsLoading(true);
     setNodeStatusList([]); // Reset node status list
@@ -178,32 +104,29 @@ function App() {
       console.log("📝 Original prompt:", prompt);
       setOriginalPrompt(prompt);
 
-      // Make the API call with sessionId
+      // Call enhancer API
       console.log("🔄 Calling enhancer API with session ID:", sessionId);
 
-      // Add the call to the browser console for debugging
-      console.log(`fetch('http://localhost:5000/enhancer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt: "${prompt.replace(/"/g, '\\"')}", sessionId: "${sessionId}" })
-      }).then(r => r.json()).then(console.log)`);
-
-      const response = await fetch('http://localhost:5000/enhancer', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prompt, sessionId })
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+      // Use the enhancerAPI if available, otherwise use fallback
+      let data;
+      if (window.enhancerAPI) {
+        data = await window.enhancerAPI.enhancePrompt(prompt, sessionId);
+      } else if (window.callEnhancerAPI) {
+        data = await window.callEnhancerAPI(prompt, sessionId);
+      } else {
+        // Last resort fallback
+        console.error("⚠️ No API functions available. Using simple prompt enhancement.");
+        data = {
+          enhancedPrompt: `# Task\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
+          _fallback: true
+        };
       }
 
-      const data = await response.json();
       console.log("✅ API call complete, received data:", data);
 
-      // The final response will have these
+      // If we have an enhanced prompt, use it
       if (data.enhancedPrompt) {
-        console.log("📝 Setting final enhanced prompt from API response");
+        console.log("📝 Setting enhanced prompt");
         setEnhancedPrompt(data.enhancedPrompt);
         injectPrompt(data.enhancedPrompt);
       }
@@ -217,7 +140,7 @@ function App() {
           // Set a default score if none was received
           if (score === null) {
             setScore(50);
-            setScoreRationale("Score estimated as WebSocket updates were not received.");
+            setScoreRationale("Score estimated as real-time updates were not received.");
             setImprovementTips("Consider checking the backend connection for real-time updates.");
           }
         }
@@ -226,10 +149,15 @@ function App() {
     } catch (error) {
       console.error("❌ Error in sendToEngine:", error);
       setIsLoading(false);
+
+      // Set fallback score
+      setScore(30);
+      setScoreRationale("Error connecting to enhancement service.");
+      setImprovementTips("Check that the backend server is running at localhost:5000.");
     }
   };
 
-  //reset everything when the user cancels
+  // Reset everything when the user cancels
   const restoreOriginal = () => {
     injectPrompt(originalPrompt);
     setOriginalPrompt("");
@@ -241,7 +169,7 @@ function App() {
     setIsSidebarVisible(false);
   };
 
-  // resets everything when the users runs optimize again
+  // Reset everything when the user runs optimize again
   const runOptimization = () => {
     setOriginalPrompt("");
     setEnhancedPrompt("");
@@ -259,20 +187,28 @@ function App() {
   const showInsights = () => setIsSidebarVisible(true);
   const closeSidebar = () => setIsSidebarVisible(false);
 
-  // Toggle debug mode
-  const toggleDebugMode = () => {
-    setDebugMode(prev => !prev);
-    console.log("Debug mode:", !debugMode);
-  };
-
-  // Custom function to get node data
+  // Function to get node data
   const getNodeData = (nodeName) => {
     console.log(`Looking for node data for ${nodeName} in list of ${nodeStatusList.length} items`);
+
+    // First try to get from local node status list
     const nodeStatus = nodeStatusList.find(status =>
       status.node_name === nodeName ||
       (status.data && status.data.node_type === nodeName)
     );
-    return nodeStatus?.data || null;
+
+    if (nodeStatus?.data) {
+      return nodeStatus.data;
+    }
+
+    // If not found locally and enhancerAPI is available, try to get from backend
+    if (window.enhancerAPI && window.enhancerAPI.getNodeData) {
+      // Return a promise that will be handled by the NodeBlock component
+      return window.enhancerAPI.getNodeData(nodeName);
+    }
+
+    // If all else fails, return null
+    return null;
   };
 
   // Debug function - can be triggered from browser console
@@ -281,16 +217,19 @@ function App() {
       sessionId,
       isLoading,
       isSidebarVisible,
-      socket: socket ? "Connected" : "Not connected",
-      socketId: socket?.id,
       nodeStatusList: nodeStatusList.length,
       originalPrompt,
       enhancedPrompt,
-      score
+      score,
+      apiAvailable: typeof window.enhancerAPI !== 'undefined'
     });
-    
-    // Print the full nodeStatusList for debugging
-    console.log("Full nodeStatusList:", nodeStatusList);
+
+    // Check connection status if API is available
+    if (window.enhancerAPI && window.enhancerAPI.checkConnectionStatus) {
+      window.enhancerAPI.checkConnectionStatus()
+        .then(status => console.log("Connection status:", status))
+        .catch(error => console.error("Error checking connection:", error));
+    }
   };
 
   return (
@@ -316,28 +255,6 @@ function App() {
         isLoading={isLoading}
         nodeStatusList={nodeStatusList}
       />
-      
-      {/* Debug button - bottom left corner */}
-      <button 
-        onClick={toggleDebugMode}
-        style={{
-          position: 'fixed',
-          bottom: '10px',
-          left: '10px',
-          zIndex: 10000,
-          background: '#333',
-          color: 'white',
-          padding: '5px 10px',
-          border: 'none',
-          borderRadius: '5px',
-          cursor: 'pointer'
-        }}
-      >
-        {debugMode ? "Hide Debug" : "Show Debug"}
-      </button>
-      
-      {/* Debug component */}
-      {debugMode && <SocketDebugger sessionId={sessionId} />}
     </div>
   );
 }

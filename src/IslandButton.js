@@ -90,9 +90,8 @@ function IslandButton({
             onClick={runOptimization}
             variant="contained"
             sx={{ textTransform: "none", backgroundColor: blueColor }}
-            disabled={isLoading}
           >
-            {isLoading ? "Optimizing..." : "Optimize"}
+            Optimize
           </Button>
         </Box>
       );
