@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useEffect } from "react";
 import NodeBlock from "./NodeBlock";
 import { Box, Paper, Typography, Button, keyframes } from "@mui/material";
 
@@ -22,31 +22,38 @@ function Sidebar({
   improvementTips,
   fetchNodeData,
   optimizationRun,
-  isLoading, // Now using global isLoading from App.js
+  isLoading,
+  nodeStatusList,
 }) {
   const blueColor = "#2196f3";
-  const [visibleBlocks, setVisibleBlocks] = useState([false, false, false]);
 
+  // Enhanced logging when node status list changes
   useEffect(() => {
-    if (isOpen && isLoading) {
-      // Adjusted timings: Show blocks immediately, 1.5s, and 3s
-      const timers = [
-        setTimeout(() => setVisibleBlocks([true, false, false]), 0), // First block appears instantly
-        setTimeout(() => setVisibleBlocks([true, true, false]), 1500), // Second block appears after 1.5s
-        setTimeout(() => setVisibleBlocks([true, true, true]), 3000), // Third block appears after 3s
-      ];
+    console.log("Sidebar received nodeStatusList update:", nodeStatusList);
+    console.log("NodeStatusList length:", nodeStatusList.length);
 
-      return () => timers.forEach(clearTimeout);
-    } else {
-      setVisibleBlocks([false, false, false]); // Reset blocks when closing
+    // Log some sample data if available
+    if (nodeStatusList.length > 0) {
+      console.log("Latest node update:", nodeStatusList[nodeStatusList.length - 1]);
     }
-  }, [isOpen, isLoading]);
+  }, [nodeStatusList]);
 
   const getScoreColor = (score) => {
     if (score >= 75) return "green";
     if (score >= 40) return "orange";
     return "red";
   };
+
+  // Define the order and names of nodes to display in the sidebar
+  const nodeDisplayOrder = [
+    // { id: "OriginalPromptNode", label: "Original Prompt Analysis" },
+    { id: "CategorizePromptNode", label: "Prompt Categorization" },
+    { id: "QueryDisambiguationNode", label: "Disambiguation Check" },
+    { id: "RephraseNode", label: "Prompt Rephrasing" },
+    { id: "PromptEnhancerNode", label: "Prompt Enhancement" },
+    { id: "PromptEvaluationNode", label: "Prompt Evaluation" },
+    { id: "FinalAnswerNode", label: "Final Response Generation" },
+  ];
 
   return (
     <Paper
@@ -80,16 +87,24 @@ function Sidebar({
           color: isLoading ? blueColor : getScoreColor(score),
         }}
       >
-        {isLoading ? "Hold tight, we’re supercharging your prompts! ⚡️" : `Score: ${score ?? "--"}`}
+        {isLoading ? "Hold tight, we're supercharging your prompts! ⚡️" : `Score: ${score ?? "--"}`}
       </Typography>
 
       {isLoading ? (
-        // Loading Blocks with Optimized Timing
+        // Real-time node status updates
         <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-          {["Loading...", "Fetching data...", "Almost done..."].map((text, index) =>
-            visibleBlocks[index] ? (
+          {/* Debug information - display nodeStatusList length */}
+          <Paper sx={{ p: 1, bgcolor: "#f5f5f5" }}>
+            <Typography variant="caption">
+              Received {nodeStatusList.length} updates
+            </Typography>
+          </Paper>
+
+          {nodeStatusList.length > 0 ? (
+            // If we have actual updates, show them
+            nodeStatusList.map((status, index) => (
               <Paper
-                key={index}
+                key={`node-update-${index}-${status.time || Date.now()}`} // Ensure unique keys
                 sx={{
                   backgroundColor: "#007DE0",
                   color: "white",
@@ -98,12 +113,68 @@ function Sidebar({
                   textAlign: "left",
                   width: "100%",
                   opacity: 0,
-                  animation: `${slideUp} 0.8s forwards`, // Faster slide-up effect
+                  animation: `${slideUp} 0.8s forwards`,
+                  animationDelay: `${index * 0.1}s`,
                 }}
               >
-                {text}
+                <Typography variant="body2" fontWeight="bold">
+                  {status.node_name} {status.time ? `- ${status.time}` : ''}
+                </Typography>
+                {status.data?.category && (
+                  <Typography variant="body2">
+                    Category: {status.data.category}
+                  </Typography>
+                )}
+                {status.data?.current_step && (
+                  <Typography variant="body2">
+                    Step: {status.data.current_step}
+                  </Typography>
+                )}
+                {/* Display other relevant properties */}
+                {status.data?.clarification_question && (
+                  <Typography variant="body2">
+                    Clarification: {status.data.clarification_question}
+                  </Typography>
+                )}
+                {status.data?.rephrased_question && (
+                  <Typography variant="body2">
+                    Rephrased: Yes
+                  </Typography>
+                )}
+                {status.data?.overall_score && (
+                  <Typography variant="body2">
+                    Score: {(status.data.overall_score * 10).toFixed(0)}/100
+                  </Typography>
+                )}
+                {status.data?.status && (
+                  <Typography variant="body2">
+                    Status: {status.data.status}
+                  </Typography>
+                )}
               </Paper>
-            ) : null
+            ))
+          ) : (
+            // Fallback to placeholder blocks if no updates yet
+            ["Initializing process...", "Analyzing prompt...", "Almost done..."].map((text, index) => (
+              <Paper
+                key={`placeholder-${index}`}
+                sx={{
+                  backgroundColor: "#007DE0",
+                  color: "white",
+                  p: 1,
+                  borderRadius: "8px",
+                  textAlign: "left",
+                  width: "100%",
+                  opacity: 0,
+                  animation: `${slideUp} 0.8s forwards`,
+                  animationDelay: `${index * 0.5}s`,
+                }}
+              >
+                <Typography variant="body2">
+                  {text}
+                </Typography>
+              </Paper>
+            ))
           )}
         </Box>
       ) : (
@@ -120,14 +191,27 @@ function Sidebar({
 
           <Box sx={{ width: "100%" }}>
             <Typography variant="h6">Changes Made</Typography>
-            {Array.from({ length: 7 }, (_, index) => (
+            {nodeDisplayOrder.map((node) => (
               <NodeBlock
-                key={`node-${index}-${optimizationRun}`}
-                nodeName={`Node ${index + 1}`}
+                key={`node-${node.id}-${optimizationRun}`}
+                nodeName={node.id}
+                nodeLabel={node.label}
                 fetchNodeData={fetchNodeData}
               />
             ))}
           </Box>
+
+          {/* Debug info - always show during development */}
+          <Paper variant="outlined" sx={{ p: 1, width: "100%", mt: 2, bgcolor: "#f5f5f5" }}>
+            <Typography variant="subtitle2">Debug Info</Typography>
+            <Typography variant="body2">Node updates: {nodeStatusList.length}</Typography>
+            <Typography variant="body2">Score: {score}</Typography>
+            <Typography variant="caption" sx={{ display: "block", whiteSpace: "pre-wrap" }}>
+              Last update: {nodeStatusList.length > 0 ?
+                JSON.stringify(nodeStatusList[nodeStatusList.length - 1], null, 2).substring(0, 100) + "..." :
+                "None"}
+            </Typography>
+          </Paper>
         </>
       )}
 

@@ -5,17 +5,42 @@ function injectReactApp() {
     appContainer.id = "react-app-container";
     document.body.appendChild(appContainer);
 
+    // First ensure Socket.io is loaded
+    const socketScript = document.createElement('script');
+    socketScript.src = 'https://cdn.socket.io/4.6.0/socket.io.min.js';
+    socketScript.crossOrigin = 'anonymous';
 
-    //Took forever to figure out, shoutout chatgpt and stack overflow, this code here let's us inject our react app via the main<hash>.js file that is created at build
-    fetch(chrome.runtime.getURL("asset-manifest.json"))
-        .then((response) => response.json())
-        .then((manifest) => {
-            const script = document.createElement("script");
-            script.src = chrome.runtime.getURL(manifest["files"]["main.js"]);
-            script.type = "module";
-            document.body.appendChild(script);
-        })
-        .catch((error) => console.error("Failed to inject React app:", error));
+    // Wait for Socket.io to load before loading the app
+    socketScript.onload = () => {
+        console.log("Socket.io loaded successfully");
+
+        // Then load React app
+        fetch(chrome.runtime.getURL("asset-manifest.json"))
+            .then((response) => response.json())
+            .then((manifest) => {
+                const script = document.createElement("script");
+                script.src = chrome.runtime.getURL(manifest["files"]["main.js"]);
+                script.type = "module";
+                document.body.appendChild(script);
+            })
+            .catch((error) => console.error("Failed to inject React app:", error));
+    };
+
+    socketScript.onerror = () => {
+        console.error("Failed to load Socket.io");
+        // Still try to load the app even if Socket.io fails
+        fetch(chrome.runtime.getURL("asset-manifest.json"))
+            .then((response) => response.json())
+            .then((manifest) => {
+                const script = document.createElement("script");
+                script.src = chrome.runtime.getURL(manifest["files"]["main.js"]);
+                script.type = "module";
+                document.body.appendChild(script);
+            })
+            .catch((error) => console.error("Failed to inject React app:", error));
+    };
+
+    document.head.appendChild(socketScript);
 }
 
 function sendSettingsToReact() {
@@ -53,7 +78,10 @@ window.addEventListener('message', async (event) => {
                 headers: {
                     'Content-Type': 'application/json',
                 },
-                body: JSON.stringify({ prompt: event.data.prompt })
+                body: JSON.stringify({
+                    prompt: event.data.prompt,
+                    sessionId: event.data.sessionId
+                })
             });
 
             if (!response.ok) {
