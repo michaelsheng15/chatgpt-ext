@@ -68,29 +68,31 @@ window.addEventListener('message', async (event) => {
     switch (message.type) {
         case 'ENHANCE_PROMPT':
             try {
-                // Forward to background script
+                // 1) Update or store the session ID if provided
+                if (message.sessionId) {
+                    currentSessionId = message.sessionId;
+                }
+
+                // 2) Connect the WebSocket *before* calling the API
+                console.log("Connecting socket for session:", currentSessionId);
+                await chrome.runtime.sendMessage({
+                    type: "CONNECT_SOCKET",
+                    sessionId: currentSessionId
+                });
+
+                // 3) Now call the enhancer API
+                console.log("Calling enhancer API for session:", currentSessionId);
                 const response = await chrome.runtime.sendMessage({
                     type: "API_CALL",
                     endpoint: "enhancer",
                     method: "POST",
                     data: {
                         prompt: message.prompt,
-                        sessionId: message.sessionId || currentSessionId
+                        sessionId: currentSessionId
                     }
                 });
 
-                // Store the session ID for future use
-                if (message.sessionId) {
-                    currentSessionId = message.sessionId;
-                }
-
-                // Connect WebSocket for this session
-                chrome.runtime.sendMessage({
-                    type: "CONNECT_SOCKET",
-                    sessionId: currentSessionId
-                });
-
-                // Send response back to page
+                // 4) Send response back to page
                 if (response.success) {
                     window.postMessage({
                         type: 'ENHANCE_PROMPT_RESPONSE',
@@ -162,8 +164,28 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Only handle messages from our background script
     if (sender.id !== chrome.runtime.id) return;
 
-    // Forward to page scripts
-    window.postMessage(message, '*');
+    // Process the message for NODE_COMPLETED to ensure proper formatting
+    if (message.type === "NODE_COMPLETED") {
+        // Extract node_name from 'node_name' field in message or from 'node_data' if available
+        const node_name = message.node_name;
+        const node_type = message.node_data?.node_type || message.node_type || node_name;
+        const node_output = message.node_data?.node_output || message.node_data;
+
+        // Create a modified message with correct structure expected by frontend
+        const modifiedMessage = {
+            ...message,
+            node_name,
+            node_type,
+            node_output,
+            timestamp: message.timestamp || Date.now()
+        };
+
+        // Forward the modified message to page scripts
+        window.postMessage(modifiedMessage, '*');
+    } else {
+        // Forward other messages unchanged to page scripts
+        window.postMessage(message, '*');
+    }
 
     // Acknowledge receipt
     sendResponse({ received: true });

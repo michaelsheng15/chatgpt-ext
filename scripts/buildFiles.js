@@ -13,7 +13,7 @@ if (!fs.existsSync(buildDir)) {
 // Copy each specified file from src to build
 srcFiles.forEach(file => {
   const srcPath = path.join(srcDir, file);
-  const socketDir = path.resolve(__dirname, '../build/static/js');
+  const socketDir = path.resolve(__dirname, '../build/');
   const socketPath = path.join(socketDir, file);
   const destPath = path.join(buildDir, file);
 

@@ -32,21 +32,19 @@ function Sidebar({
     console.log("Sidebar received nodeStatusList update:", nodeStatusList);
     console.log("NodeStatusList length:", nodeStatusList.length);
 
-    // Log some sample data if available
     if (nodeStatusList.length > 0) {
       console.log("Latest node update:", nodeStatusList[nodeStatusList.length - 1]);
     }
   }, [nodeStatusList]);
 
-  const getScoreColor = (score) => {
-    if (score >= 75) return "green";
-    if (score >= 40) return "orange";
+  const getScoreColor = (val) => {
+    if (val >= 75) return "green";
+    if (val >= 40) return "orange";
     return "red";
   };
 
-  // Define the order and names of nodes to display in the sidebar
+  // Define the order and names of nodes to display in the "Changes Made" section
   const nodeDisplayOrder = [
-    // { id: "OriginalPromptNode", label: "Original Prompt Analysis" },
     { id: "CategorizePromptNode", label: "Prompt Categorization" },
     { id: "QueryDisambiguationNode", label: "Disambiguation Check" },
     { id: "RephraseNode", label: "Prompt Rephrasing" },
@@ -54,6 +52,106 @@ function Sidebar({
     { id: "PromptEvaluationNode", label: "Prompt Evaluation" },
     { id: "FinalAnswerNode", label: "Final Response Generation" },
   ];
+
+  // Function to get a simplified node name for display
+  const getSimpleNodeName = (nodeName) => {
+    if (!nodeName) return "Unknown Node";
+
+    // Remove "Node" suffix and any leading/trailing whitespace
+    let displayName = nodeName.replace(/Node$/, "").trim();
+
+    // Add spaces before capital letters (e.g., "CategorizePrompt" → "Categorize Prompt")
+    displayName = displayName.replace(/([A-Z])/g, ' $1').trim();
+
+    return displayName;
+  };
+
+  // Helper to display node output based on type
+  const renderNodeOutput = (node) => {
+    const output = node.node_output;
+
+    // If output is a string, show it directly
+    if (typeof output === 'string') {
+      return (
+        <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+          {output.length > 100 ? `${output.substring(0, 100)}...` : output}
+        </Typography>
+      );
+    }
+
+    // If output is null or undefined
+    if (!output) {
+      return null;
+    }
+
+    // For different node types
+    switch (node.node_type || node.node_name) {
+      case "CategorizePromptNode":
+        return (
+          <Typography variant="body2">
+            Category: {output}
+          </Typography>
+        );
+
+      case "QueryDisambiguationNode":
+        return (
+          <Typography variant="body2">
+            {output === "clear"
+              ? "Prompt is clear"
+              : `Question: ${output}`}
+          </Typography>
+        );
+
+      case "RephraseNode":
+        return (
+          <Typography variant="body2">
+            Rephrased to: {typeof output === 'string' && output.length > 50 ? `${output.substring(0, 50)}...` : output}
+          </Typography>
+        );
+
+      case "PromptEnhancerNode":
+        return (
+          <Typography variant="body2">
+            Enhanced prompt created {typeof output === 'string' ? `(${output.length} chars)` : ''}
+          </Typography>
+        );
+
+      case "PromptEvaluationNode":
+        if (output && output.overall_score) {
+          return (
+            <Typography variant="body2">
+              Score: {(output.overall_score * 10).toFixed(0)}/100
+            </Typography>
+          );
+        }
+        return null;
+
+      case "FinalAnswerNode":
+        return (
+          <Typography variant="body2">
+            Final answer generated
+          </Typography>
+        );
+
+      case "VersioningNode":
+        return (
+          <Typography variant="body2">
+            {output}
+          </Typography>
+        );
+
+      default:
+        // For any other node or object output, show a summary
+        if (output) {
+          return (
+            <Typography variant="body2">
+              Process completed
+            </Typography>
+          );
+        }
+        return null;
+    }
+  };
 
   return (
     <Paper
@@ -78,7 +176,7 @@ function Sidebar({
         overflowY: "auto",
       }}
     >
-      {/* Dynamic Title */}
+      {/* Top Title: either "Hold tight..." or final score */}
       <Typography
         variant="h5"
         sx={{
@@ -90,103 +188,84 @@ function Sidebar({
         {isLoading ? "Hold tight, we're supercharging your prompts! ⚡️" : `Score: ${score ?? "--"}`}
       </Typography>
 
-      {isLoading ? (
-        // Real-time node status updates
-        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-          {/* Debug information - display nodeStatusList length */}
-          <Paper sx={{ p: 1, bgcolor: "#f5f5f5" }}>
-            <Typography variant="caption">
-              Received {nodeStatusList.length} updates
+      {/* Node updates (real-time or final) */}
+      <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+        {/* Debug info - display how many node updates so far */}
+        <Paper sx={{ p: 1, bgcolor: "#f5f5f5" }}>
+          <Typography variant="caption">
+            Received {nodeStatusList.length} updates
+          </Typography>
+        </Paper>
+
+        {/* If we have node updates, show them. Otherwise, show placeholders */}
+        {nodeStatusList.length > 0 ? (
+          nodeStatusList.map((node, index) => (
+            <Paper
+              key={`node-update-${index}-${node.time || Date.now()}`}
+              sx={{
+                backgroundColor: "#007DE0",
+                color: "white",
+                p: 1,
+                borderRadius: "8px",
+                textAlign: "left",
+                width: "100%",
+                opacity: 0,
+                animation: `${slideUp} 0.8s forwards`,
+                animationDelay: `${index * 0.1}s`,
+              }}
+            >
+              <Typography variant="body2" fontWeight="bold">
+                {getSimpleNodeName(node.node_type || node.node_name)} {node.time ? `- ${node.time}` : ""}
+              </Typography>
+
+              {/* Display the node output appropriately */}
+              {renderNodeOutput(node)}
+            </Paper>
+          ))
+        ) : (
+          // Fallback placeholders if no updates yet
+          ["Initializing process...", "Analyzing prompt...", "Almost done..."].map((text, index) => (
+            <Paper
+              key={`placeholder-${index}`}
+              sx={{
+                backgroundColor: "#007DE0",
+                color: "white",
+                p: 1,
+                borderRadius: "8px",
+                textAlign: "left",
+                width: "100%",
+                opacity: 0,
+                animation: `${slideUp} 0.8s forwards`,
+                animationDelay: `${index * 0.5}s`,
+              }}
+            >
+              <Typography variant="body2">{text}</Typography>
+            </Paper>
+          ))
+        )}
+      </Box>
+
+      {/* Once the process is done (isLoading === false), show final summary/score details */}
+      {!isLoading && (
+        <>
+          <Paper
+            variant="outlined"
+            sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd", mt: 2 }}
+          >
+            <Typography variant="h6">Why this score?</Typography>
+            <Typography variant="body2">
+              {scoreRationale || "No explanation available."}
             </Typography>
           </Paper>
 
-          {nodeStatusList.length > 0 ? (
-            // If we have actual updates, show them
-            nodeStatusList.map((status, index) => (
-              <Paper
-                key={`node-update-${index}-${status.time || Date.now()}`} // Ensure unique keys
-                sx={{
-                  backgroundColor: "#007DE0",
-                  color: "white",
-                  p: 1,
-                  borderRadius: "8px",
-                  textAlign: "left",
-                  width: "100%",
-                  opacity: 0,
-                  animation: `${slideUp} 0.8s forwards`,
-                  animationDelay: `${index * 0.1}s`,
-                }}
-              >
-                <Typography variant="body2" fontWeight="bold">
-                  {status.node_name} {status.time ? `- ${status.time}` : ''}
-                </Typography>
-                {status.data?.category && (
-                  <Typography variant="body2">
-                    Category: {status.data.category}
-                  </Typography>
-                )}
-                {status.data?.current_step && (
-                  <Typography variant="body2">
-                    Step: {status.data.current_step}
-                  </Typography>
-                )}
-                {/* Display other relevant properties */}
-                {status.data?.clarification_question && (
-                  <Typography variant="body2">
-                    Clarification: {status.data.clarification_question}
-                  </Typography>
-                )}
-                {status.data?.rephrased_question && (
-                  <Typography variant="body2">
-                    Rephrased: Yes
-                  </Typography>
-                )}
-                {status.data?.overall_score && (
-                  <Typography variant="body2">
-                    Score: {(status.data.overall_score * 10).toFixed(0)}/100
-                  </Typography>
-                )}
-                {status.data?.status && (
-                  <Typography variant="body2">
-                    Status: {status.data.status}
-                  </Typography>
-                )}
-              </Paper>
-            ))
-          ) : (
-            // Fallback to placeholder blocks if no updates yet
-            ["Initializing process...", "Analyzing prompt...", "Almost done..."].map((text, index) => (
-              <Paper
-                key={`placeholder-${index}`}
-                sx={{
-                  backgroundColor: "#007DE0",
-                  color: "white",
-                  p: 1,
-                  borderRadius: "8px",
-                  textAlign: "left",
-                  width: "100%",
-                  opacity: 0,
-                  animation: `${slideUp} 0.8s forwards`,
-                  animationDelay: `${index * 0.5}s`,
-                }}
-              >
-                <Typography variant="body2">
-                  {text}
-                </Typography>
-              </Paper>
-            ))
-          )}
-        </Box>
-      ) : (
-        <>
-          <Paper variant="outlined" sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}>
-            <Typography variant="h6">Why this score?</Typography>
-            <Typography variant="body2">{scoreRationale || "No explanation available."}</Typography>
-          </Paper>
-
-          <Paper variant="outlined" sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}>
+          <Paper
+            variant="outlined"
+            sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}
+          >
             <Typography variant="h6">Improvement tips</Typography>
-            <Typography variant="body2">{improvementTips || "No suggestions available."}</Typography>
+            <Typography variant="body2">
+              {improvementTips || "No suggestions available."}
+            </Typography>
           </Paper>
 
           <Box sx={{ width: "100%" }}>
@@ -201,15 +280,22 @@ function Sidebar({
             ))}
           </Box>
 
-          {/* Debug info - always show during development */}
-          <Paper variant="outlined" sx={{ p: 1, width: "100%", mt: 2, bgcolor: "#f5f5f5" }}>
+          {/* Debug info - optional in final release */}
+          <Paper
+            variant="outlined"
+            sx={{ p: 1, width: "100%", mt: 2, bgcolor: "#f5f5f5" }}
+          >
             <Typography variant="subtitle2">Debug Info</Typography>
-            <Typography variant="body2">Node updates: {nodeStatusList.length}</Typography>
+            <Typography variant="body2">
+              Node updates: {nodeStatusList.length}
+            </Typography>
             <Typography variant="body2">Score: {score}</Typography>
             <Typography variant="caption" sx={{ display: "block", whiteSpace: "pre-wrap" }}>
-              Last update: {nodeStatusList.length > 0 ?
-                JSON.stringify(nodeStatusList[nodeStatusList.length - 1], null, 2).substring(0, 100) + "..." :
-                "None"}
+              Last update:{" "}
+              {nodeStatusList.length > 0
+                ? JSON.stringify(nodeStatusList[nodeStatusList.length - 1], null, 2)
+                  .substring(0, 100) + "..."
+                : "None"}
             </Typography>
           </Paper>
         </>

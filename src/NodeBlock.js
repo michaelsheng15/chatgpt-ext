@@ -16,48 +16,46 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
 
     // Handle different node types with different data structures
     switch (nodeName) {
-      // case "OriginalPromptNode":
-      //   if (data.original_prompt_answer) {
-      //     changeText = `Initial response generated for the original prompt`;
-      //     reasonText = `Response confidence: ${(data.original_prompt_lin_probs * 100).toFixed(2)}%`;
-      //   }
-      //   break;
-
       case "CategorizePromptNode":
-        if (data.category) {
-          changeText = `Prompt categorized as: ${data.category}`;
+        // For category, data is a string directly
+        if (data) {
+          changeText = `Prompt categorized as: ${data}`;
           reasonText = `Category determines the enhancement approach`;
         }
         break;
 
       case "QueryDisambiguationNode":
-        if (data.clarification_question) {
-          if (data.clarification_question === "clear") {
+        // For disambiguation, data is a string (either "clear" or a question)
+        if (data) {
+          if (data === "clear") {
             changeText = `Prompt is clear and unambiguous`;
             reasonText = `No clarification needed`;
           } else {
-            changeText = `Clarification needed: "${data.clarification_question}"`;
+            changeText = `Clarification needed: "${data}"`;
             reasonText = `Ambiguity detected in the original prompt`;
           }
         }
         break;
 
       case "RephraseNode":
-        if (data.rephrased_question) {
+        // For rephrase, data is a string with the rephrased question
+        if (data) {
           changeText = `Prompt rephrased for better AI understanding`;
           reasonText = `Improved clarity and structure`;
         }
         break;
 
       case "PromptEnhancerNode":
-        if (data.enhanced_prompt) {
+        // For enhancer, data is the enhanced prompt as a string
+        if (data) {
           changeText = `Prompt enhanced with best practices`;
           reasonText = `Added structure, clarity, and precise instructions`;
         }
         break;
 
       case "PromptEvaluationNode":
-        if (data.overall_score) {
+        // For evaluation, data is an object with scores and suggestions
+        if (data && data.overall_score) {
           changeText = `Prompt evaluation score: ${(data.overall_score * 10).toFixed(0)}/100`;
           reasonText = data.scores ?
             `Scores: ${Object.entries(data.scores)
@@ -68,59 +66,109 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
         break;
 
       case "FinalAnswerNode":
-        if (data.final_prompt_answer) {
+        // For final answer, data is a string with the final response
+        if (data) {
           changeText = `Final response generated`;
-          reasonText = `Response confidence: ${(data.final_prompt_lin_probs * 100).toFixed(2)}%`;
+          reasonText = `Response is based on the enhanced prompt`;
+        }
+        break;
+
+      case "VersioningNode":
+        // For versioning, data is a string with the step name
+        if (data) {
+          changeText = `Processing step: ${data}`;
+          reasonText = `Workflow progress tracking`;
         }
         break;
 
       default:
-        if (data.current_step) {
-          changeText = `Processing step: ${data.current_step}`;
-          reasonText = `Node processing completed`;
-        } else {
+        // Default handler for any other node types
+        if (typeof data === 'string') {
           changeText = `Processing ${nodeLabel || nodeName}`;
-          reasonText = `Node status: ${data.status || "completed"}`;
+          reasonText = data;
+        } else if (data) {
+          changeText = `Processing ${nodeLabel || nodeName}`;
+          reasonText = `Node processing completed`;
         }
     }
 
     return { changeText, reasonText };
   };
 
-  // useEffect to handle direct node data from WebSocket
+  // useEffect to fetch node data
   useEffect(() => {
-    // Check if fetchNodeData is a function (old way) or direct data (new WebSocket way)
-    if (typeof fetchNodeData === 'function') {
-      // Old way - fetch asynchronously
-      fetchNodeData(nodeName)
-        .then((data) => {
-          setNodeData(data);
+    const getNodeData = async () => {
+      try {
+        const data = await fetchNodeData(nodeName);
+        setNodeData(data);
+
+        if (data) {
           const { changeText, reasonText } = extractNodeData(data);
-          setChangeText(changeText || data.changeText);
-          setReasonText(reasonText || data.reasonText);
-        })
-        .catch((error) => {
-          console.error(`Error fetching data for ${nodeName}:`, error);
-        });
-    } else {
-      // New way - direct data object from WebSocket
-      const data = fetchNodeData;
-      setNodeData(data);
-      const { changeText, reasonText } = extractNodeData(data);
-      setChangeText(changeText);
-      setReasonText(reasonText);
-    }
+          setChangeText(changeText);
+          setReasonText(reasonText);
+        }
+      } catch (error) {
+        console.error(`Error fetching data for ${nodeName}:`, error);
+      }
+    };
+
+    getNodeData();
   }, [fetchNodeData, nodeName, nodeLabel]);
 
   const handleToggle = () => {
     // Only toggle if the data is ready (both changeText and reasonText exist or nodeData exists)
-    if ((changeText && reasonText) || nodeData) {
+    if ((changeText && reasonText) || nodeData !== null) {
       setIsExpanded((prev) => !prev);
     }
   };
 
   // Determine if we have valid data to display
   const hasData = (changeText && reasonText) || nodeData !== null;
+
+  // Function to render additional node-specific content
+  const renderNodeContent = () => {
+    if (!nodeData) return null;
+
+    switch (nodeName) {
+      case "RephraseNode":
+        return (
+          <Box sx={{ mt: 1, p: 1, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+            <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+              {typeof nodeData === 'string' ? nodeData : JSON.stringify(nodeData)}
+            </Typography>
+          </Box>
+        );
+
+      case "PromptEnhancerNode":
+        return (
+          <Box sx={{ mt: 1, p: 1, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
+            <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
+              {typeof nodeData === 'string'
+                ? (nodeData.length > 150 ? `${nodeData.substring(0, 150)}...` : nodeData)
+                : JSON.stringify(nodeData)}
+            </Typography>
+          </Box>
+        );
+
+      case "PromptEvaluationNode":
+        if (nodeData.suggestions && nodeData.suggestions.length > 0) {
+          return (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="body2" fontWeight="bold">Suggestions:</Typography>
+              {nodeData.suggestions.slice(0, 3).map((suggestion, index) => (
+                <Typography key={index} variant="body2" sx={{ ml: 1 }}>
+                  • {suggestion}
+                </Typography>
+              ))}
+            </Box>
+          );
+        }
+        return null;
+
+      default:
+        return null;
+    }
+  };
 
   return (
     <Paper
@@ -153,6 +201,9 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
           <Typography variant="body2">
             <strong>Why:</strong> {reasonText}
           </Typography>
+
+          {/* Additional node-specific content */}
+          {renderNodeContent()}
         </Box>
       )}
     </Paper>

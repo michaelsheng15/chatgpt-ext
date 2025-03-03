@@ -55,7 +55,7 @@ export const fetchNodeData = async (nodeName) => {
   if (useDirectFetch) {
     try {
       console.log(`[fetchNodeData] Using direct fetch for ${nodeName}`);
-      const response = await fetch(`http://localhost:5000/node/${nodeName}`, {
+      const response = await fetch(`http://http://127.0.0.1:5000/node/${nodeName}`, {
         method: 'GET',
         headers: { 'Content-Type': 'application/json' }
       });
@@ -98,7 +98,7 @@ export const connectToWebSocket = (sessionId, onNodeUpdate, onScoreUpdate) => {
     console.log("Attempting direct WebSocket connection...");
 
     try {
-      socket = io("http://localhost:5000", {
+      socket = io("http://127.0.0.1:5000", {
         transports: ["websocket", "polling"],
         reconnection: true,
         reconnectionAttempts: 5,
@@ -163,7 +163,7 @@ export const connectToWebSocket = (sessionId, onNodeUpdate, onScoreUpdate) => {
       // Try to proxy through the background script
       chrome.runtime.sendMessage({
         type: "PROXY_WEBSOCKET",
-        url: "ws://localhost:5000/socket.io/?EIO=4&transport=websocket"
+        url: "ws://http://127.0.0.1:5000/socket.io/?EIO=4&transport=websocket"
       }, (response) => {
         if (response && response.connectionId) {
           console.log("Proxy WebSocket connection established with ID:", response.connectionId);

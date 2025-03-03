@@ -19,61 +19,76 @@ function App() {
   const [nodeStatusList, setNodeStatusList] = useState([]);
   const [sessionId] = useState(() => window.enhancerAPI?.getSessionId() || `session-${Date.now()}`);
 
-  // Listen for node updates from background script
+  // Listen for node updates from background script via window.postMessage
   useEffect(() => {
     console.log("🚀 Setting up node update listener...");
 
-    // Skip if enhancerAPI is not available
-    if (!window.enhancerAPI || !window.enhancerAPI.onNodeUpdate) {
-      console.error("❌ enhancerAPI.onNodeUpdate not available");
-      return;
-    }
+    const handleMessage = (event) => {
+      // Only handle messages posted by content.js
+      if (event.source !== window || !event.data) return;
 
-    // Set up listener for node updates
-    const removeListener = window.enhancerAPI.onNodeUpdate((nodeName, nodeData) => {
-      console.log("📦 NODE COMPLETED EVENT RECEIVED:", nodeName);
+      if (event.data.type === "NODE_COMPLETED") {
+        const { node_name, node_type, node_output } = event.data;
+        console.log("📦 NODE COMPLETED EVENT RECEIVED:", node_name || node_type);
 
-      // Add to status list
-      setNodeStatusList(prev => {
-        const newList = [...prev, {
-          time: new Date().toLocaleTimeString(),
-          node_name: nodeName,
-          data: nodeData
-        }];
-        console.log("Updated node list, now contains:", newList.length, "items");
-        return newList;
-      });
+        // Add to status list
+        setNodeStatusList(prev => {
+          const newList = [
+            ...prev,
+            {
+              time: new Date().toLocaleTimeString(),
+              node_name: node_name || node_type,
+              node_type: node_type || node_name,
+              node_output: node_output
+            }
+          ];
+          console.log("Updated node list, now contains:", newList.length, "items");
+          return newList;
+        });
 
-      // Handle specific nodes
-      if (nodeName === "PromptEvaluationNode" && nodeData) {
-        if (nodeData.overall_score) {
-          const newScore = Math.round(nodeData.overall_score * 10);
-          console.log("📊 Setting score:", newScore);
-          setScore(newScore);
+        // Handle specific nodes (PromptEvaluationNode, FinalAnswerNode, etc.)
+        if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode") && node_output) {
+          if (node_output.overall_score) {
+            const newScore = Math.round(node_output.overall_score * 10);
+            console.log("📊 Setting score:", newScore);
+            setScore(newScore);
 
-          // Set rationale and tips
-          if (nodeData.scores) {
-            setScoreRationale(`Scores: ${Object.entries(nodeData.scores)
-              .map(([dim, score]) => `${dim}: ${score}/10`)
-              .join(', ')}`);
+            if (node_output.scores) {
+              setScoreRationale(
+                `Scores: ${Object.entries(node_output.scores)
+                  .map(([dim, sc]) => `${dim}: ${sc}/10`)
+                  .join(", ")}`
+              );
+            }
+
+            const suggestionsCount = node_output.suggestions?.length || 0;
+            setImprovementTips(`${suggestionsCount} improvement suggestions available.`);
           }
+        }
 
-          setImprovementTips(`${nodeData.suggestions_count || 0} improvement suggestions available.`);
+        // Check if we got the enhanced prompt
+        if ((node_name === "PromptEnhancerNode" || node_type === "PromptEnhancerNode") && node_output) {
+          console.log("📝 Setting enhanced prompt from node output");
+          setEnhancedPrompt(node_output);
+          // Only inject the prompt if we haven't already done so
+          if (!enhancedPrompt) {
+            injectPrompt(node_output);
+          }
+        }
+
+        if ((node_name === "FinalAnswerNode" || node_type === "FinalAnswerNode")) {
+          console.log("🏁 Final node completed");
+          setIsLoading(false);
         }
       }
+    };
 
-      if (nodeName === "FinalAnswerNode") {
-        console.log("🏁 Final node completed");
-        setIsLoading(false);
-      }
-    });
-
-    // Clean up listener when component unmounts
+    window.addEventListener("message", handleMessage);
     return () => {
       console.log("Removing node update listener");
-      removeListener();
+      window.removeEventListener("message", handleMessage);
     };
-  }, []);
+  }, [enhancedPrompt]);
 
   // Listen for settings updates
   useEffect(() => {
@@ -87,7 +102,7 @@ function App() {
     return () => window.removeEventListener("message", handleMessage);
   }, []);
 
-  // Main function to send prompt to backend
+  // Main function to send prompt to engine
   const sendToEngine = async () => {
     setIsLoading(true);
     setNodeStatusList([]); // Reset node status list
@@ -194,11 +209,11 @@ function App() {
     // First try to get from local node status list
     const nodeStatus = nodeStatusList.find(status =>
       status.node_name === nodeName ||
-      (status.data && status.data.node_type === nodeName)
+      status.node_type === nodeName
     );
 
-    if (nodeStatus?.data) {
-      return nodeStatus.data;
+    if (nodeStatus?.node_output) {
+      return nodeStatus.node_output;
     }
 
     // If not found locally and enhancerAPI is available, try to get from backend

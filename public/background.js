@@ -1,6 +1,8 @@
 // background.js - Background script to handle all communication with backend
 // This runs in the extension's background context which isn't restricted by ChatGPT's CSP
 
+importScripts(chrome.runtime.getURL('socket.io.min.js'));
+
 // Store active connections
 const activeConnections = {};
 let socket = null;
@@ -16,7 +18,7 @@ function connectToBackend(sessionId) {
   }
 
   // Create new connection
-  socket = io("http://localhost:5000", {
+  socket = io("http://127.0.0.1:5000", {
     transports: ["websocket", "polling"],
     reconnection: true,
     reconnectionAttempts: 5,
@@ -101,7 +103,7 @@ async function callBackendAPI(endpoint, method, data) {
   console.log(`Background: Calling API ${method} ${endpoint}`, data);
 
   try {
-    const response = await fetch(`http://localhost:5000/${endpoint}`, {
+    const response = await fetch(`http://127.0.0.1:5000/${endpoint}`, {
       method: method,
       headers: {
         'Content-Type': 'application/json'
