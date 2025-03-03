@@ -9,6 +9,10 @@
   overflow: hidden;   /* Hide overflow to prevent scrolling */
 }
 
+* {
+  font-family: 'Poppins', sans-serif;
+}
+
 .App-logo {
   height: 40vmin;
   pointer-events: none;

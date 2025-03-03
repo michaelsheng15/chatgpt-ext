@@ -35,9 +35,9 @@ function App() {
       if (!prompt) return;
       setOriginalPrompt(prompt);
 
-      //const data = await window.callEnhancerAPI(prompt);
+      // const data = await window.callEnhancerAPI(prompt);
 
-      //hardcoded, comment this out when doing backend stuff
+      // hardcoded, comment this out when doing backend stuff
       const data = {
         enhancedPrompt: "This is a hardcoded enhanced prompt.",
         answer: "This is a hardcoded answer.",
@@ -53,7 +53,11 @@ function App() {
     } catch (error) {
       console.error("Error in sendToEngine:", error);
     } finally {
-      setIsLoading(false);
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 10000);
+      // setIsLoading(false);
+      
     }
   };
 

@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from "react";
 import NodeBlock from "./NodeBlock";
+// import ScoreBar from "./ScoreBar";
+import CircularScoreBar from "./CircularBar";
 import { Box, Paper, Typography, Button, keyframes } from "@mui/material";
+import { OrbitProgress } from "react-loading-indicators";
 
 // Slide-up animation for loading blocks
 const slideUp = keyframes`
@@ -24,16 +27,16 @@ function Sidebar({
   optimizationRun,
   isLoading, // Now using global isLoading from App.js
 }) {
-  const blueColor = "#2196f3";
+  const blueColor = "#007DE0";
   const [visibleBlocks, setVisibleBlocks] = useState([false, false, false]);
 
   useEffect(() => {
     if (isOpen && isLoading) {
-      // Adjusted timings: Show blocks immediately, 1.5s, and 3s
+      // Adjusted timings: Blocks appear at 1s, 3s, and 5s instead of 0s, 1.5s, and 3s
       const timers = [
-        setTimeout(() => setVisibleBlocks([true, false, false]), 0), // First block appears instantly
-        setTimeout(() => setVisibleBlocks([true, true, false]), 1500), // Second block appears after 1.5s
-        setTimeout(() => setVisibleBlocks([true, true, true]), 3000), // Third block appears after 3s
+        setTimeout(() => setVisibleBlocks([true, false, false]), 1000), // First block appears after 1s
+        setTimeout(() => setVisibleBlocks([true, true, false]), 3000), // Second block appears after 3s
+        setTimeout(() => setVisibleBlocks([true, true, true]), 5000), // Third block appears after 5s
       ];
 
       return () => timers.forEach(clearTimeout);
@@ -42,17 +45,12 @@ function Sidebar({
     }
   }, [isOpen, isLoading]);
 
-  const getScoreColor = (score) => {
-    if (score >= 75) return "green";
-    if (score >= 40) return "orange";
-    return "red";
-  };
-
   return (
     <Paper
       elevation={3}
       sx={{
         position: "fixed",
+        borderRadius: "25px",
         top: 0,
         right: 0,
         width: 300,
@@ -71,17 +69,51 @@ function Sidebar({
         overflowY: "auto",
       }}
     >
-      {/* Dynamic Title */}
-      <Typography
-        variant="h5"
+      {isLoading && (
+
+        <Box sx={{ marginTop: "50px", textAlign: "center" }}>
+          <OrbitProgress color="#007DE0" size="medium" text="" textColor="" />
+          <Typography
+            // variant="h4"
+            sx={{
+              marginTop: "30px",
+              fontSize: "22px",
+              fontWeight: "bold",
+              color: "black",
+              letterSpacing: "0em"
+            }}
+          >
+            Optimizing your prompt!
+          </Typography>
+
+          <Typography
+            sx={{
+              color: "grey",
+              marginTop: "8px",
+              fontSize: "15px"
+            }}
+          >
+            Enhancing prompt structure and analyzing context...
+          </Typography>
+        </Box>)}
+
+
+      {!isLoading && <CircularScoreBar score={score} />}
+      {!isLoading && <Box
         sx={{
-          fontWeight: "bold",
-          textAlign: "center",
-          color: isLoading ? blueColor : getScoreColor(score),
+          background: "#E3F2FD",
+          color: "#1976D2",
+          padding: "2px 8px",
+          borderRadius: "15px",
+          fontSize: "0.7rem",
+          fontWeight: "500px",
+          boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.15)",
         }}
       >
-        {isLoading ? "Hold tight, we’re supercharging your prompts! ⚡️" : `Score: ${score ?? "--"}`}
-      </Typography>
+        PROMPT SCORE
+      </Box>}
+
+
 
       {isLoading ? (
         // Loading Blocks with Optimized Timing
@@ -108,15 +140,52 @@ function Sidebar({
         </Box>
       ) : (
         <>
-          <Paper variant="outlined" sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}>
-            <Typography variant="h6">Why this score?</Typography>
-            <Typography variant="body2">{scoreRationale || "No explanation available."}</Typography>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2, // Increased padding for better spacing
+              borderRadius: "12px", // Rounded corners
+              width: "100%",
+              backgroundColor: "#fff", // White background
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)", // Subtle shadow for a modern look
+            }}
+          >
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem" }}>
+                Why this score?
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#5f6368" }}>
+                {scoreRationale || "No explanation available."}
+              </Typography>
+            </Box>
           </Paper>
 
-          <Paper variant="outlined" sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}>
-            <Typography variant="h6">Improvement tips</Typography>
-            <Typography variant="body2">{improvementTips || "No suggestions available."}</Typography>
+          <Paper
+            elevation={2}
+            sx={{
+              p: 2, // Increased padding for better spacing
+              borderRadius: "12px", // Rounded corners
+              width: "100%",
+              backgroundColor: "#fff", // White background
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: "0px 2px 8px rgba(0, 0, 0, 0.1)", // Subtle shadow for a modern look
+            }}
+          >
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem" }}>
+                Tips for Improvement
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#5f6368" }}>
+                {improvementTips || "No suggestions available."}
+              </Typography>
+            </Box>
           </Paper>
+
 
           <Box sx={{ width: "100%" }}>
             <Typography variant="h6">Changes Made</Typography>
