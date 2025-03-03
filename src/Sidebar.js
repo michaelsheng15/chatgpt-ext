@@ -46,22 +46,23 @@ function Sidebar({
   // Define the order and names of nodes to display in the "Changes Made" section
   const nodeDisplayOrder = [
     { id: "CategorizePromptNode", label: "Prompt Categorization" },
-    { id: "QueryDisambiguationNode", label: "Disambiguation Check" },
     { id: "RephraseNode", label: "Prompt Rephrasing" },
     { id: "PromptEnhancerNode", label: "Prompt Enhancement" },
     { id: "PromptEvaluationNode", label: "Prompt Evaluation" },
-    { id: "FinalAnswerNode", label: "Final Response Generation" },
   ];
 
   // Function to get a simplified node name for display
   const getSimpleNodeName = (nodeName) => {
     if (!nodeName) return "Unknown Node";
 
-    // Remove "Node" suffix and any leading/trailing whitespace
-    let displayName = nodeName.replace(/Node$/, "").trim();
+    const displayNames = {
+      "CategorizePromptNode": "Prompt Categorized",
+      "RephraseNode": "Prompt Rephrased",
+      "PromptEnhancerNode": "Enhanced Prompt Generated",
+      "PromptEvaluationNode": "Prompt Evaluation"
+    }
 
-    // Add spaces before capital letters (e.g., "CategorizePrompt" → "Categorize Prompt")
-    displayName = displayName.replace(/([A-Z])/g, ' $1').trim();
+    const displayName = displayNames[nodeName]
 
     return displayName;
   };
@@ -93,15 +94,6 @@ function Sidebar({
           </Typography>
         );
 
-      case "QueryDisambiguationNode":
-        return (
-          <Typography variant="body2">
-            {output === "clear"
-              ? "Prompt is clear"
-              : `Question: ${output}`}
-          </Typography>
-        );
-
       case "RephraseNode":
         return (
           <Typography variant="body2">
@@ -125,20 +117,6 @@ function Sidebar({
           );
         }
         return null;
-
-      case "FinalAnswerNode":
-        return (
-          <Typography variant="body2">
-            Final answer generated
-          </Typography>
-        );
-
-      case "VersioningNode":
-        return (
-          <Typography variant="body2">
-            {output}
-          </Typography>
-        );
 
       default:
         // For any other node or object output, show a summary
@@ -190,13 +168,6 @@ function Sidebar({
 
       {/* Node updates (real-time or final) */}
       <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* Debug info - display how many node updates so far */}
-        <Paper sx={{ p: 1, bgcolor: "#f5f5f5" }}>
-          <Typography variant="caption">
-            Received {nodeStatusList.length} updates
-          </Typography>
-        </Paper>
-
         {/* If we have node updates, show them. Otherwise, show placeholders */}
         {nodeStatusList.length > 0 ? (
           nodeStatusList.map((node, index) => (
@@ -215,7 +186,7 @@ function Sidebar({
               }}
             >
               <Typography variant="body2" fontWeight="bold">
-                {getSimpleNodeName(node.node_type || node.node_name)} {node.time ? `- ${node.time}` : ""}
+                {getSimpleNodeName(node.node_type || node.node_name)}
               </Typography>
 
               {/* Display the node output appropriately */}

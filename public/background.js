@@ -78,8 +78,8 @@ function connectToBackend(sessionId) {
         chrome.tabs.sendMessage(tab.id, {
           type: "NODE_COMPLETED",
           sessionId,
-          nodeName: data.node_name,
-          nodeData: data.node_data
+          node_name: data.node_name,
+          node_output: data.node_output
         }).catch(err => console.log("Tab not ready:", err));
       });
     });

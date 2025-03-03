@@ -168,10 +168,10 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "NODE_COMPLETED") {
         // Extract node_name from 'node_name' field in message or from 'node_data' if available
         const node_name = message.node_name;
-        const node_type = message.node_data?.node_type || message.node_type || node_name;
-        const node_output = message.node_data?.node_output || message.node_data;
+        const node_output = message.node_output;
+        const node_type = message.node_type || node_name;
 
-        // Create a modified message with correct structure expected by frontend
+        // Then forward it
         const modifiedMessage = {
             ...message,
             node_name,

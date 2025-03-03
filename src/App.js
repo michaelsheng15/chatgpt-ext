@@ -10,7 +10,7 @@ function App() {
   const [alwaysShowInsights, setAlwaysShowInsights] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
   const [originalPrompt, setOriginalPrompt] = useState("");
-  const [enhancedPrompt, setEnhancedPrompt] = useState("");
+  const [nodeOutput, setNodeOutput] = useState("");
   const [score, setScore] = useState(null);
   const [scoreRationale, setScoreRationale] = useState("");
   const [improvementTips, setImprovementTips] = useState("");
@@ -69,15 +69,15 @@ function App() {
         // Check if we got the enhanced prompt
         if ((node_name === "PromptEnhancerNode" || node_type === "PromptEnhancerNode") && node_output) {
           console.log("📝 Setting enhanced prompt from node output");
-          setEnhancedPrompt(node_output);
+          setNodeOutput(node_output);
           // Only inject the prompt if we haven't already done so
-          if (!enhancedPrompt) {
+          if (!nodeOutput) {
             injectPrompt(node_output);
           }
         }
 
-        if ((node_name === "FinalAnswerNode" || node_type === "FinalAnswerNode")) {
-          console.log("🏁 Final node completed");
+        if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
+          console.log("🏁 Prompt enhancer completed");
           setIsLoading(false);
         }
       }
@@ -88,7 +88,7 @@ function App() {
       console.log("Removing node update listener");
       window.removeEventListener("message", handleMessage);
     };
-  }, [enhancedPrompt]);
+  }, [nodeOutput]);
 
   // Listen for settings updates
   useEffect(() => {
@@ -132,7 +132,7 @@ function App() {
         // Last resort fallback
         console.error("⚠️ No API functions available. Using simple prompt enhancement.");
         data = {
-          enhancedPrompt: `# Task\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
+          nodeOutput: `# Task\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
           _fallback: true
         };
       }
@@ -140,10 +140,10 @@ function App() {
       console.log("✅ API call complete, received data:", data);
 
       // If we have an enhanced prompt, use it
-      if (data.enhancedPrompt) {
+      if (data.nodeOutput) {
         console.log("📝 Setting enhanced prompt");
-        setEnhancedPrompt(data.enhancedPrompt);
-        injectPrompt(data.enhancedPrompt);
+        setNodeOutput(data.nodeOutput);
+        injectPrompt(data.nodeOutput);
       }
 
       // If no WebSocket updates were received, handle it here
@@ -176,7 +176,7 @@ function App() {
   const restoreOriginal = () => {
     injectPrompt(originalPrompt);
     setOriginalPrompt("");
-    setEnhancedPrompt("");
+    setNodeOutput("");
     setScore(null);
     setScoreRationale("");
     setImprovementTips("");
@@ -187,7 +187,7 @@ function App() {
   // Reset everything when the user runs optimize again
   const runOptimization = () => {
     setOriginalPrompt("");
-    setEnhancedPrompt("");
+    setNodeOutput("");
     setScore(null);
     setScoreRationale("");
     setImprovementTips("");
@@ -234,7 +234,7 @@ function App() {
       isSidebarVisible,
       nodeStatusList: nodeStatusList.length,
       originalPrompt,
-      enhancedPrompt,
+      nodeOutput,
       score,
       apiAvailable: typeof window.enhancerAPI !== 'undefined'
     });

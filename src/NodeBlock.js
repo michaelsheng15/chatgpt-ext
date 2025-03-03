@@ -24,19 +24,6 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
         }
         break;
 
-      case "QueryDisambiguationNode":
-        // For disambiguation, data is a string (either "clear" or a question)
-        if (data) {
-          if (data === "clear") {
-            changeText = `Prompt is clear and unambiguous`;
-            reasonText = `No clarification needed`;
-          } else {
-            changeText = `Clarification needed: "${data}"`;
-            reasonText = `Ambiguity detected in the original prompt`;
-          }
-        }
-        break;
-
       case "RephraseNode":
         // For rephrase, data is a string with the rephrased question
         if (data) {
@@ -62,22 +49,6 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
               .map(([dim, score]) => `${dim}: ${score}/10`)
               .join(', ')}` :
             `Evaluation complete`;
-        }
-        break;
-
-      case "FinalAnswerNode":
-        // For final answer, data is a string with the final response
-        if (data) {
-          changeText = `Final response generated`;
-          reasonText = `Response is based on the enhanced prompt`;
-        }
-        break;
-
-      case "VersioningNode":
-        // For versioning, data is a string with the step name
-        if (data) {
-          changeText = `Processing step: ${data}`;
-          reasonText = `Workflow progress tracking`;
         }
         break;
 
