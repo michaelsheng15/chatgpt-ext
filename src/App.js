@@ -55,9 +55,9 @@ function App() {
 
             if (node_output.scores) {
               setScoreRationale(
-                `Scores: ${Object.entries(node_output.scores)
+                `${Object.entries(node_output.scores)
                   .map(([dim, sc]) => `${dim}: ${sc}/10`)
-                  .join(", ")}`
+                  .join("\n")}` // New line after each score
               );
             }
 
@@ -78,7 +78,10 @@ function App() {
 
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
           console.log("🏁 Prompt enhancer completed");
-          setIsLoading(false);
+
+          setTimeout(() => {
+            setIsLoading(false);
+          }, 3000);
         }
       }
     };

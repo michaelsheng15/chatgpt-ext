@@ -1,6 +1,9 @@
 import React, { useEffect } from "react";
 import NodeBlock from "./NodeBlock";
+import CircularScoreBar from "./CircularBar";
 import { Box, Paper, Typography, Button, keyframes } from "@mui/material";
+import { OrbitProgress } from "react-loading-indicators";
+
 
 // Slide-up animation for loading blocks
 const slideUp = keyframes`
@@ -25,7 +28,7 @@ function Sidebar({
   isLoading,
   nodeStatusList,
 }) {
-  const blueColor = "#2196f3";
+  const blueColor = "#007DE0";
 
   // Enhanced logging when node status list changes
   useEffect(() => {
@@ -37,11 +40,6 @@ function Sidebar({
     }
   }, [nodeStatusList]);
 
-  const getScoreColor = (val) => {
-    if (val >= 75) return "green";
-    if (val >= 40) return "orange";
-    return "red";
-  };
 
   // Define the order and names of nodes to display in the "Changes Made" section
   const nodeDisplayOrder = [
@@ -56,10 +54,10 @@ function Sidebar({
     if (!nodeName) return "Unknown Node";
 
     const displayNames = {
-      "CategorizePromptNode": "Prompt Categorized",
-      "RephraseNode": "Prompt Rephrased",
-      "PromptEnhancerNode": "Enhanced Prompt Generated",
-      "PromptEvaluationNode": "Prompt Evaluation"
+      "CategorizePromptNode": "📦 Prompt Categorized",
+      "RephraseNode": "📝 Prompt Rephrased",
+      "PromptEnhancerNode": "🧠 Enhanced Prompt Generated",
+      "PromptEvaluationNode": "✅ Optimization Complete!"
     }
 
     const displayName = displayNames[nodeName]
@@ -74,7 +72,7 @@ function Sidebar({
     // If output is a string, show it directly
     if (typeof output === 'string') {
       return (
-        <Typography variant="body2" sx={{ wordBreak: "break-word" }}>
+        <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
           {output.length > 100 ? `${output.substring(0, 100)}...` : output}
         </Typography>
       );
@@ -97,14 +95,14 @@ function Sidebar({
       case "RephraseNode":
         return (
           <Typography variant="body2">
-            Rephrased to: {typeof output === 'string' && output.length > 50 ? `${output.substring(0, 50)}...` : output}
+            Rephrased: {typeof output === 'string' && output.length > 50 ? `${output.substring(0, 50)}...` : output}
           </Typography>
         );
 
       case "PromptEnhancerNode":
         return (
           <Typography variant="body2">
-            Enhanced prompt created {typeof output === 'string' ? `(${output.length} chars)` : ''}
+            Enhanced prompt: {typeof output === 'string' ? `(${output.length} chars)` : ''}
           </Typography>
         );
 
@@ -152,25 +150,41 @@ function Sidebar({
         gap: 2,
         alignItems: "center",
         overflowY: "auto",
+        borderRadius: "15px"
       }}
     >
-      {/* Top Title: either "Hold tight..." or final score */}
-      <Typography
-        variant="h5"
-        sx={{
-          fontWeight: "bold",
-          textAlign: "center",
-          color: isLoading ? blueColor : getScoreColor(score),
-        }}
-      >
-        {isLoading ? "Hold tight, we're supercharging your prompts! ⚡️" : `Score: ${score ?? "--"}`}
-      </Typography>
 
-      {/* Node updates (real-time or final) */}
-      <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
-        {/* If we have node updates, show them. Otherwise, show placeholders */}
-        {nodeStatusList.length > 0 ? (
-          nodeStatusList.map((node, index) => (
+      {isLoading && (
+        <Box sx={{ marginTop: "50px", textAlign: "center" }}>
+          <OrbitProgress color="#007DE0" size="medium" text="" textColor="" />
+          <Typography
+            // variant="h4"
+            sx={{
+              marginTop: "30px",
+              fontSize: "22px",
+              fontWeight: "bold",
+              color: "black",
+              letterSpacing: "0em"
+            }}
+          >
+            Optimizing your prompt!
+          </Typography>
+
+          <Typography
+            sx={{
+              color: "grey",
+              marginTop: "8px",
+              marginBottom: "8px",
+              fontSize: "15px"
+            }}
+          >
+            Enhancing prompt structure and analyzing context...
+          </Typography>
+        </Box>)}
+
+      {isLoading && (
+        <Box sx={{ width: "100%", display: "flex", flexDirection: "column", gap: 2 }}>
+          {nodeStatusList.length > 0 && nodeStatusList.map((node, index) => (
             <Paper
               key={`node-update-${index}-${node.time || Date.now()}`}
               sx={{
@@ -185,62 +199,78 @@ function Sidebar({
                 animationDelay: `${index * 0.1}s`,
               }}
             >
-              <Typography variant="body2" fontWeight="bold">
+              <Typography variant="body2" fontWeight="bold" fontSize="15px">
                 {getSimpleNodeName(node.node_type || node.node_name)}
               </Typography>
-
-              {/* Display the node output appropriately */}
               {renderNodeOutput(node)}
             </Paper>
-          ))
-        ) : (
-          // Fallback placeholders if no updates yet
-          ["Initializing process...", "Analyzing prompt...", "Almost done..."].map((text, index) => (
-            <Paper
-              key={`placeholder-${index}`}
-              sx={{
-                backgroundColor: "#007DE0",
-                color: "white",
-                p: 1,
-                borderRadius: "8px",
-                textAlign: "left",
-                width: "100%",
-                opacity: 0,
-                animation: `${slideUp} 0.8s forwards`,
-                animationDelay: `${index * 0.5}s`,
-              }}
-            >
-              <Typography variant="body2">{text}</Typography>
-            </Paper>
-          ))
-        )}
-      </Box>
+          ))}
+        </Box>
+      )}
 
-      {/* Once the process is done (isLoading === false), show final summary/score details */}
+      {!isLoading && <CircularScoreBar score={score} />}
+
       {!isLoading && (
         <>
           <Paper
-            variant="outlined"
-            sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd", mt: 2 }}
+            elevation={4}
+            sx={{
+              p: 2, // Increased padding for better spacing
+              borderRadius: "12px", // Rounded corners
+              width: "100%",
+              backgroundColor: "#fff", // White background
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)", // Darker and larger shadow
+            }}
           >
-            <Typography variant="h6">Why this score?</Typography>
-            <Typography variant="body2">
-              {scoreRationale || "No explanation available."}
-            </Typography>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem" }}>
+                Score Breakdown:
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#5f6368" }}>
+                {scoreRationale || "No explanation available."}
+              </Typography>
+            </Box>
           </Paper>
 
           <Paper
-            variant="outlined"
-            sx={{ p: 1, width: "100%", backgroundColor: "#e3f2fd" }}
+            elevation={4}
+            sx={{
+              p: 2, // Increased padding for better spacing
+              borderRadius: "12px", // Rounded corners
+              width: "100%",
+              backgroundColor: "#fff", // White background
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "space-between",
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)", // Darker and larger shadow
+            }}
           >
-            <Typography variant="h6">Improvement tips</Typography>
-            <Typography variant="body2">
-              {improvementTips || "No suggestions available."}
-            </Typography>
+            <Box>
+              <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem" }}>
+                Tips for Improvement:
+              </Typography>
+              <Typography variant="body2" sx={{ color: "#5f6368" }}>
+                {improvementTips || "No suggestions available."}
+              </Typography>
+            </Box>
           </Paper>
 
-          <Box sx={{ width: "100%" }}>
-            <Typography variant="h6">Changes Made</Typography>
+          <Box
+            sx={{
+              width: "100%",
+              p: 2, // Padding for better spacing
+              borderRadius: "12px", // Rounded corners
+              backgroundColor: "#fff", // White background
+              boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)", // Darker, larger shadow
+            }}
+          >
+            <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem", mb: 1 }}>
+              What Changed?
+            </Typography>
+
             {nodeDisplayOrder.map((node) => (
               <NodeBlock
                 key={`node-${node.id}-${optimizationRun}`}
@@ -250,25 +280,6 @@ function Sidebar({
               />
             ))}
           </Box>
-
-          {/* Debug info - optional in final release */}
-          <Paper
-            variant="outlined"
-            sx={{ p: 1, width: "100%", mt: 2, bgcolor: "#f5f5f5" }}
-          >
-            <Typography variant="subtitle2">Debug Info</Typography>
-            <Typography variant="body2">
-              Node updates: {nodeStatusList.length}
-            </Typography>
-            <Typography variant="body2">Score: {score}</Typography>
-            <Typography variant="caption" sx={{ display: "block", whiteSpace: "pre-wrap" }}>
-              Last update:{" "}
-              {nodeStatusList.length > 0
-                ? JSON.stringify(nodeStatusList[nodeStatusList.length - 1], null, 2)
-                  .substring(0, 100) + "..."
-                : "None"}
-            </Typography>
-          </Paper>
         </>
       )}
 
