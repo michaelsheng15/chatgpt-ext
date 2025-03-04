@@ -3,7 +3,7 @@ import NodeBlock from "./NodeBlock";
 import CircularScoreBar from "./CircularBar";
 import { Box, Paper, Typography, Button, keyframes } from "@mui/material";
 import { OrbitProgress } from "react-loading-indicators";
-
+import CloseIcon from '@mui/icons-material/Close';
 
 // Slide-up animation for loading blocks
 const slideUp = keyframes`
@@ -296,7 +296,7 @@ function Sidebar({
           textTransform: "none",
         }}
       >
-        X
+        <CloseIcon />
       </Button>
     </Paper>
   );

@@ -1,5 +1,7 @@
 import React from "react";
 import { Box, Button, ButtonGroup } from "@mui/material";
+import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
+import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 
 function IslandButton({
   alwaysShowInsights,
@@ -48,7 +50,7 @@ function IslandButton({
         <Box sx={containerStyle}>
           <ButtonGroup variant="contained" size="medium">
             <Button onClick={restoreOriginal} color="error" sx={{ textTransform: "none" }}>
-              X
+              <DeleteForeverIcon />
             </Button>
             <Button onClick={closeSidebar} sx={{ textTransform: "none", backgroundColor: blueColor }}>
               Close Sidebar
@@ -68,10 +70,10 @@ function IslandButton({
         <Box sx={containerStyle}>
           <ButtonGroup variant="contained" size="medium">
             <Button onClick={restoreOriginal} color="error" sx={{ textTransform: "none" }}>
-              X
+              <DeleteForeverIcon />
             </Button>
             <Button onClick={runOptimization} sx={{ textTransform: "none", backgroundColor: blueColor }}>
-              Optimize
+              Optimize  <AutoFixHighIcon />
             </Button>
             <Button
               onClick={showInsights}
@@ -91,7 +93,7 @@ function IslandButton({
             variant="contained"
             sx={{ textTransform: "none", backgroundColor: blueColor }}
           >
-            Optimize
+            Optimize  <AutoFixHighIcon />
           </Button>
         </Box>
       );
@@ -113,10 +115,10 @@ function IslandButton({
         <Box sx={containerStyle}>
           <ButtonGroup variant="contained" size="medium">
             <Button onClick={restoreOriginal} color="error" sx={{ textTransform: "none" }}>
-              X
+              <DeleteForeverIcon />
             </Button>
             <Button onClick={runOptimization} sx={{ textTransform: "none", backgroundColor: blueColor }}>
-              Optimize
+              Optimize  <AutoFixHighIcon />
             </Button>
             <Button
               onClick={showInsights}
@@ -136,7 +138,7 @@ function IslandButton({
             variant="contained"
             sx={{ textTransform: "none", backgroundColor: blueColor }}
           >
-            Optimize
+            Optimize  <AutoFixHighIcon />
           </Button>
         </Box>
       );
