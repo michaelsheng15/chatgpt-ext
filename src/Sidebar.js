@@ -110,7 +110,7 @@ function Sidebar({
         if (output && output.overall_score) {
           return (
             <Typography variant="body2">
-              Score: {(output.overall_score * 10).toFixed(0)}/100
+              {/* Score: {(output.overall_score * 10).toFixed(0)}/100 */}
             </Typography>
           );
         }
@@ -188,12 +188,13 @@ function Sidebar({
             <Paper
               key={`node-update-${index}-${node.time || Date.now()}`}
               sx={{
-                backgroundColor: "#007DE0",
-                color: "white",
+                backgroundColor: "white", // Set background to white
+                color: "#007DE0", // Text color to match blue theme
                 p: 1,
                 borderRadius: "8px",
                 textAlign: "left",
                 width: "100%",
+                border: "5px dashed #007DE0", // Dotted blue border
                 opacity: 0,
                 animation: `${slideUp} 0.8s forwards`,
                 animationDelay: `${index * 0.1}s`,
@@ -209,6 +210,19 @@ function Sidebar({
       )}
 
       {!isLoading && <CircularScoreBar score={score} />}
+      {!isLoading && <Box
+        sx={{
+          background: "#E3F2FD",
+          color: "#1976D2",
+          padding: "2px 8px",
+          borderRadius: "15px",
+          fontSize: "0.7rem",
+          fontWeight: "500px",
+          boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.15)",
+        }}
+      >
+        PROMPT SCORE
+      </Box>}
 
       {!isLoading && (
         <>
@@ -252,9 +266,15 @@ function Sidebar({
               <Typography variant="h6" sx={{ fontWeight: "bold", fontSize: "1rem" }}>
                 Tips for Improvement:
               </Typography>
-              <Typography variant="body2" sx={{ color: "#5f6368" }}>
-                {improvementTips || "No suggestions available."}
-              </Typography>
+              <Box>
+                {improvementTips
+                  ? improvementTips.split("\n").map((line, index) => (
+                    <Typography key={index} variant="body2" sx={{ color: "#5f6368" }}>
+                      {line}
+                    </Typography>
+                  ))
+                  : <Typography>No suggestions available.</Typography>}
+              </Box>
             </Box>
           </Paper>
 

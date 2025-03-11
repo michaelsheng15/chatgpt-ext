@@ -48,21 +48,23 @@ function App() {
 
         // Handle specific nodes (PromptEvaluationNode, FinalAnswerNode, etc.)
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode") && node_output) {
-          if (node_output.overall_score) {
-            const newScore = Math.round(node_output.overall_score * 10);
+          if (node_output.score) {
+            console.log("MADE IT TO THE SCORE SECTION");
+            const newScore = Math.round(node_output.score);
             console.log("📊 Setting score:", newScore);
             setScore(newScore);
 
-            if (node_output.scores) {
+            if (node_output.justification) {
               setScoreRationale(
-                `${Object.entries(node_output.scores)
-                  .map(([dim, sc]) => `${dim}: ${sc}/10`)
-                  .join("\n")}` // New line after each score
+                node_output.justification
               );
             }
 
-            const suggestionsCount = node_output.suggestions?.length || 0;
-            setImprovementTips(`${suggestionsCount} improvement suggestions available.`);
+            if (node_output.suggestions) {
+              setImprovementTips(
+                node_output.suggestions.map((suggestion, index) => `${index + 1}. ${suggestion}`).join("\n")
+              );
+            }
           }
         }
 
