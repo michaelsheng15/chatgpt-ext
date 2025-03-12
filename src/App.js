@@ -49,8 +49,7 @@ function App() {
         // Handle specific nodes (PromptEvaluationNode, FinalAnswerNode, etc.)
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode") && node_output) {
           if (node_output.score) {
-            console.log("MADE IT TO THE SCORE SECTION");
-            const newScore = Math.round(node_output.score);
+            const newScore = node_output.score;
             console.log("📊 Setting score:", newScore);
             setScore(newScore);
 

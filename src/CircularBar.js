@@ -5,15 +5,13 @@ const CircularScoreBar = ({ score, maxScore = 100, animationDuration = 1000 }) =
   const [progress, setProgress] = useState(0);
   const [displayScore, setDisplayScore] = useState(0);
 
-  // Circular size and thickness
   const size = 220;
-  const thickness = 10; // Thicker for a bolder effect
-  const fontSize = "3rem"; // Bigger font for the score
+  const thickness = 10;
+  const fontSize = "3rem";
 
   useEffect(() => {
     let start = 0;
     const step = (score / maxScore) * 100 / (animationDuration / 10);
-
     const interval = setInterval(() => {
       start += step;
       if (start >= (score / maxScore) * 100) {
@@ -31,7 +29,6 @@ const CircularScoreBar = ({ score, maxScore = 100, animationDuration = 1000 }) =
 
   return (
     <Box sx={{ position: "relative", display: "flex", alignItems: "center", justifyContent: "center" }}>
-      {/* White Background Circle with Shadow */}
       <Paper
         elevation={5}
         sx={{
@@ -65,7 +62,6 @@ const CircularScoreBar = ({ score, maxScore = 100, animationDuration = 1000 }) =
         sx={{ color: "#E0E0E0", position: "absolute" }}
       />
 
-      {/* Animated Foreground Circle (Flat Edges) */}
       <CircularProgress
         variant="determinate"
         value={progress}
@@ -74,12 +70,11 @@ const CircularScoreBar = ({ score, maxScore = 100, animationDuration = 1000 }) =
         sx={{
           color: "transparent",
           "& .MuiCircularProgress-circle": {
-            stroke: "url(#gradient)", // Apply gradient
+            stroke: "url(#gradient)",
           },
         }}
       />
 
-      {/* Gradient Definition */}
       <svg width="0" height="0">
         <defs>
           <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="0%">

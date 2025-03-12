@@ -30,7 +30,6 @@ function Sidebar({
 }) {
   const blueColor = "#007DE0";
 
-  // Enhanced logging when node status list changes
   useEffect(() => {
     console.log("Sidebar received nodeStatusList update:", nodeStatusList);
     console.log("NodeStatusList length:", nodeStatusList.length);
@@ -40,8 +39,6 @@ function Sidebar({
     }
   }, [nodeStatusList]);
 
-
-  // Define the order and names of nodes to display in the "Changes Made" section
   const nodeDisplayOrder = [
     { id: "CategorizePromptNode", label: "Prompt Categorization" },
     { id: "RephraseNode", label: "Prompt Rephrasing" },
@@ -49,7 +46,6 @@ function Sidebar({
     { id: "PromptEvaluationNode", label: "Prompt Evaluation" },
   ];
 
-  // Function to get a simplified node name for display
   const getSimpleNodeName = (nodeName) => {
     if (!nodeName) return "Unknown Node";
 
@@ -65,11 +61,9 @@ function Sidebar({
     return displayName;
   };
 
-  // Helper to display node output based on type
   const renderNodeOutput = (node) => {
     const output = node.node_output;
 
-    // If output is a string, show it directly
     if (typeof output === 'string') {
       return (
         <Typography variant="subtitle2" sx={{ wordBreak: "break-word" }}>
@@ -78,7 +72,6 @@ function Sidebar({
       );
     }
 
-    // If output is null or undefined
     if (!output) {
       return null;
     }
@@ -110,14 +103,12 @@ function Sidebar({
         if (output && output.overall_score) {
           return (
             <Typography variant="body2">
-              {/* Score: {(output.overall_score * 10).toFixed(0)}/100 */}
             </Typography>
           );
         }
         return null;
 
       default:
-        // For any other node or object output, show a summary
         if (output) {
           return (
             <Typography variant="body2">
