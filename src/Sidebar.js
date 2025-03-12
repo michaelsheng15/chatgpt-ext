@@ -150,7 +150,8 @@ function Sidebar({
         gap: 2,
         alignItems: "center",
         overflowY: "auto",
-        borderRadius: "15px"
+        borderRadius: "15px",
+        border: `4px solid "#007DE0"`,
       }}
     >
 
