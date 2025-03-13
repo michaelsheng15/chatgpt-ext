@@ -1,12 +1,12 @@
-// content.js - Injects the React app into ChatGPT and syncs settings from the popup using postMessage.
+// content.js - Injects the React app into ChatGPT and handles communication with background script
 
+// Inject React app
 function injectReactApp() {
     const appContainer = document.createElement("div");
     appContainer.id = "react-app-container";
     document.body.appendChild(appContainer);
 
-
-    //Took forever to figure out, shoutout chatgpt and stack overflow, this code here let's us inject our react app via the main<hash>.js file that is created at build
+    // Load React app from extension
     fetch(chrome.runtime.getURL("asset-manifest.json"))
         .then((response) => response.json())
         .then((manifest) => {
@@ -18,22 +18,32 @@ function injectReactApp() {
         .catch((error) => console.error("Failed to inject React app:", error));
 }
 
+// Get settings and send to React app
 function sendSettingsToReact() {
     chrome.storage.sync.get("alwaysShowInsights", (data) => {
-        window.postMessage({ type: "SETTINGS_UPDATE", alwaysShowInsights: data.alwaysShowInsights ?? true }, "*");
+        window.postMessage({
+            type: "SETTINGS_UPDATE",
+            alwaysShowInsights: data.alwaysShowInsights ?? true
+        }, "*");
     });
 }
 
+// Listen for setting changes
 chrome.storage.onChanged.addListener((changes) => {
     if (changes.alwaysShowInsights) {
-        window.postMessage({ type: "SETTINGS_UPDATE", alwaysShowInsights: changes.alwaysShowInsights.newValue }, "*");
+        window.postMessage({
+            type: "SETTINGS_UPDATE",
+            alwaysShowInsights: changes.alwaysShowInsights.newValue
+        }, "*");
     }
 });
 
+// Reset first run flag
 chrome.storage.sync.set({ firstRun: true }, () => {
     console.log("Page loaded: firstRun reset to true.");
 });
 
+// Inject scripts into page
 const injectScript = (file) => {
     const script = document.createElement('script');
     script.setAttribute('type', 'text/javascript');
@@ -41,33 +51,150 @@ const injectScript = (file) => {
     document.head.appendChild(script);
 };
 
-// Inject the API functionality
+// Inject API script
 injectScript('api.js');
 
-// Listen for messages from the injected script
+// Current active session ID
+let currentSessionId = `session-${Date.now()}`;
+
+// Create a bridge between page scripts and background script
 window.addEventListener('message', async (event) => {
-    if (event.data.type === 'ENHANCE_PROMPT') {
-        try {
-            const response = await fetch('http://localhost:5000/enhancer', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ prompt: event.data.prompt })
-            });
+    // Skip messages from other sources
+    if (event.source !== window) return;
 
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
+    const message = event.data;
+
+    // Handle different message types from page scripts
+    switch (message.type) {
+        case 'ENHANCE_PROMPT':
+            try {
+                // 1) Update or store the session ID if provided
+                if (message.sessionId) {
+                    currentSessionId = message.sessionId;
+                }
+
+                // 2) Connect the WebSocket *before* calling the API
+                console.log("Connecting socket for session:", currentSessionId);
+                await chrome.runtime.sendMessage({
+                    type: "CONNECT_SOCKET",
+                    sessionId: currentSessionId
+                });
+
+                // 3) Now call the enhancer API
+                console.log("Calling enhancer API for session:", currentSessionId);
+                const response = await chrome.runtime.sendMessage({
+                    type: "API_CALL",
+                    endpoint: "enhancer",
+                    method: "POST",
+                    data: {
+                        prompt: message.prompt,
+                        sessionId: currentSessionId
+                    }
+                });
+
+                // 4) Send response back to page
+                if (response.success) {
+                    window.postMessage({
+                        type: 'ENHANCE_PROMPT_RESPONSE',
+                        data: response.data
+                    }, '*');
+                } else {
+                    window.postMessage({
+                        type: 'ENHANCE_PROMPT_ERROR',
+                        error: response.error
+                    }, '*');
+                }
+            } catch (error) {
+                console.error('Error calling enhancer API:', error);
+                window.postMessage({
+                    type: 'ENHANCE_PROMPT_ERROR',
+                    error: error.message
+                }, '*');
             }
+            break;
 
-            const data = await response.json();
-            window.postMessage({ type: 'ENHANCE_PROMPT_RESPONSE', data }, '*');
-        } catch (error) {
-            console.error('Error:', error);
-            window.postMessage({ type: 'ENHANCE_PROMPT_ERROR', error: error.message }, '*');
-        }
+        case 'GET_NODE_DATA':
+            try {
+                const response = await chrome.runtime.sendMessage({
+                    type: "GET_NODE_DATA",
+                    sessionId: currentSessionId,
+                    nodeName: message.nodeName
+                });
+
+                window.postMessage({
+                    type: 'NODE_DATA_RESPONSE',
+                    nodeName: message.nodeName,
+                    data: response.data
+                }, '*');
+            } catch (error) {
+                console.error('Error getting node data:', error);
+                window.postMessage({
+                    type: 'NODE_DATA_ERROR',
+                    nodeName: message.nodeName,
+                    error: error.message
+                }, '*');
+            }
+            break;
+
+        case 'CHECK_SOCKET_STATUS':
+            try {
+                const status = await chrome.runtime.sendMessage({
+                    type: "CHECK_SOCKET_STATUS",
+                    sessionId: currentSessionId
+                });
+
+                window.postMessage({
+                    type: 'SOCKET_STATUS_RESPONSE',
+                    connected: status.connected,
+                    lastActivity: status.lastActivity
+                }, '*');
+            } catch (error) {
+                console.error('Error checking socket status:', error);
+                window.postMessage({
+                    type: 'SOCKET_STATUS_ERROR',
+                    error: error.message
+                }, '*');
+            }
+            break;
     }
 });
 
+// Forward messages from background script to page
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+    // Only handle messages from our background script
+    if (sender.id !== chrome.runtime.id) return;
+
+    // Process the message for NODE_COMPLETED to ensure proper formatting
+    if (message.type === "NODE_COMPLETED") {
+        // Extract node_name from 'node_name' field in message or from 'node_data' if available
+        const node_name = message.node_name;
+        const node_output = message.node_output;
+        const node_type = message.node_type || node_name;
+
+        // Then forward it
+        const modifiedMessage = {
+            ...message,
+            node_name,
+            node_type,
+            node_output,
+            timestamp: message.timestamp || Date.now()
+        };
+
+        // Forward the modified message to page scripts
+        window.postMessage(modifiedMessage, '*');
+    } else {
+        // Forward other messages unchanged to page scripts
+        window.postMessage(message, '*');
+    }
+
+    // Acknowledge receipt
+    sendResponse({ received: true });
+    return true;
+});
+
+// Initialize
 injectReactApp();
 sendSettingsToReact();
+
+// Debug info in console
+console.log('ChatGPT Enhancer content script loaded, session ID:', currentSessionId);

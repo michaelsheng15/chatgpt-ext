@@ -2,18 +2,26 @@
 
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Settings</title>
-    <link rel="stylesheet" href="popup.css">
-</head>
-<body>
-    <h3>Settings</h3>
-    <div class="toggle-container">
+    <link rel="stylesheet" href="popup.css" />
+    <script src="static/js/socket.io.min.js"></script>
+  </head>
+
+  <body>
+    <div class="popup-container">
+      <header class="popup-header">
+        <div class="logo">Dewy.ai</div>
+      </header>
+
+      <h3>Settings</h3>
+      <div class="toggle-container">
         <label>Always Show Insights</label>
-        <input type="checkbox" id="insightsToggle">
+        <input type="checkbox" id="insightsToggle" />
+      </div>
+      <script src="popup.js"></script>
     </div>
-    <script src="popup.js"></script>
-</body>
+  </body>
 </html>
