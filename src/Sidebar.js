@@ -186,7 +186,7 @@ function Sidebar({
                 borderRadius: "8px",
                 textAlign: "left",
                 width: "100%",
-                border: "5px dashed #007DE0", // Dotted blue border
+                border: "3px solid #007DE0", // Dotted blue border
                 opacity: 0,
                 animation: `${slideUp} 0.8s forwards`,
                 animationDelay: `${index * 0.1}s`,
@@ -213,10 +213,10 @@ function Sidebar({
           boxShadow: "0px 2px 5px rgba(0, 0, 0, 0.15)",
         }}
       >
-        PROMPT SCORE
+        INITIAL PROMPT SCORE
       </Box>}
 
-      {!isLoading && (
+      {!isLoading&& (
         <>
           <Paper
             elevation={4}
