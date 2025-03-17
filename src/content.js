@@ -1,14 +1,23 @@
 // content.js - Injects the React app into ChatGPT and handles communication with background script
 
-// Inject React app
+// Inject React app using a Shadow DOM to isolate it
 function injectReactApp() {
     const appContainer = document.createElement("div");
     appContainer.id = "react-app-container";
+
+    // Shadow root for your main React app
+    const shadowRoot = appContainer.attachShadow({ mode: "open" });
+
+    // Where React will mount inside the shadow root
+    const innerContainer = document.createElement("div");
+    innerContainer.id = "react-app-inner-container";
+    shadowRoot.appendChild(innerContainer);
+
     document.body.appendChild(appContainer);
 
-    // Load React app from extension
+    // Load React from extension
     fetch(chrome.runtime.getURL("asset-manifest.json"))
-        .then((response) => response.json())
+        .then((r) => r.json())
         .then((manifest) => {
             const script = document.createElement("script");
             script.src = chrome.runtime.getURL(manifest["files"]["main.js"]);
@@ -17,6 +26,79 @@ function injectReactApp() {
         })
         .catch((error) => console.error("Failed to inject React app:", error));
 }
+
+function ensureOptimizeContainer() {
+    // Find the parent container that has the audio icon
+    // Looking at the bottom container with buttons
+    const bottomContainer = document.querySelector("div.mb-2.mt-1.flex.items-center.justify-between.sm\\:mt-5");
+    if (!bottomContainer) {
+        console.log("Bottom container not found");
+        return;
+    }
+
+    // Find the right side of the container where the audio icon is
+    const rightSideContainer = bottomContainer.lastElementChild;
+    if (!rightSideContainer || !rightSideContainer.classList.contains("flex")) {
+        console.log("Right side container not found");
+        return;
+    }
+
+    // Create or reuse the optimize div
+    let optimizeDiv = document.getElementById("my-optimize-floating-block");
+    if (!optimizeDiv) {
+        optimizeDiv = document.createElement("div");
+        optimizeDiv.id = "my-optimize-floating-block";
+        optimizeDiv.style.marginRight = "4px"; // Space between our element and other elements
+        optimizeDiv.style.display = "flex";    // Make it a flex container
+        optimizeDiv.style.alignItems = "center"; // Center content vertically
+        optimizeDiv.style.zIndex = "1000";     // Ensure it stays on top
+    }
+
+    // Check if our element is already the first child of the right container
+    if (optimizeDiv.parentNode === rightSideContainer &&
+        rightSideContainer.firstElementChild === optimizeDiv) {
+        return; // Already correctly inserted
+    }
+
+    // Insert our element as the first child of the right container
+    // This puts it directly to the left of the audio icon
+    rightSideContainer.insertBefore(optimizeDiv, rightSideContainer.firstElementChild);
+}
+
+// Create a more robust observer that ensures your element stays visible
+function setupRobustObserver() {
+    // Main observer to detect when the chat interface changes
+    const mainObserver = new MutationObserver(() => {
+        ensureOptimizeContainer();
+    });
+
+    // More aggressive settings for the observer
+    mainObserver.observe(document.body, {
+        childList: true,
+        subtree: true,
+        attributes: true,
+        attributeFilter: ['class', 'style'] // Watch for style/class changes
+    });
+
+    // Secondary observer specifically for input events
+    document.addEventListener('input', () => {
+        // Delay slightly to let ChatGPT's own UI update
+        setTimeout(ensureOptimizeContainer, 50);
+    });
+
+    // Also watch for focus/blur events which might affect the UI
+    document.addEventListener('focus', ensureOptimizeContainer, true);
+    document.addEventListener('blur', ensureOptimizeContainer, true);
+
+    // Check periodically as a fallback
+    setInterval(ensureOptimizeContainer, 1000);
+
+    // Run it once initially
+    ensureOptimizeContainer();
+}
+
+// Replace your current observer setup with this more robust version
+setupRobustObserver();
 
 // Get settings and send to React app
 function sendSettingsToReact() {
