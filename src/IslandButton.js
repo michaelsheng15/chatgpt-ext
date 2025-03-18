@@ -19,21 +19,22 @@ function IslandButton({
 }) {
   const blueColor = "#007DE0";
   const whiteColor = "#fff";
-  const redColor = "red"
+  const redColor = "red";
 
+  // For debugging
+  React.useEffect(() => {
+    console.log("IslandButton rendered with isSidebarVisible:", isSidebarVisible);
+  }, [isSidebarVisible]);
+
+  // No position or transform properties - just let the button stay where it's placed in the ChatGPT interface
   const containerStyle = {
-    position: "fixed",
-    bottom: "20px",
-    right: "20px",
-    transition: "transform 0.3s ease-in-out",
-    transform: isSidebarVisible ? "translateX(-300px)" : "translateX(0)",
     zIndex: 10000,
   };
 
   const buttonGroupStyle = {
     backgroundColor: whiteColor,
     border: `4px solid ${blueColor}`,
-    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)", // Deeper shadow
+    boxShadow: "0px 4px 12px rgba(0, 0, 0, 0.3)",
     borderRadius: "20px",
   };
 
@@ -51,8 +52,8 @@ function IslandButton({
             <Button onClick={restoreOriginal} sx={{ backgroundColor: whiteColor, borderRadius: "20px 0 0 20px" }}>
               <DeleteForeverIcon sx={{ color: redColor }} />
             </Button>
-            <Button onClick={closeSidebar} sx={{ backgroundColor: whiteColor, borderRadius: "20px" }}>
-              <AnalyticsIcon sx={{ color: blueColor }}/>  
+            <Button onClick={closeSidebar} sx={{ backgroundColor: whiteColor, borderRadius: "0 20px 20px 0" }}>
+              <AnalyticsIcon sx={{ color: blueColor }} />
               <KeyboardDoubleArrowRightIcon sx={{ color: blueColor }} />
             </Button>
           </ButtonGroup>
@@ -69,12 +70,12 @@ function IslandButton({
             <Button onClick={restoreOriginal} sx={{ backgroundColor: whiteColor, borderRadius: "20px 0 0 20px" }}>
               <DeleteForeverIcon sx={{ color: redColor }} />
             </Button>
-            <Button onClick={runOptimization} sx={{ backgroundColor: whiteColor, borderRadius: "20px" }}>
+            <Button onClick={runOptimization} sx={{ backgroundColor: whiteColor }}>
               <AutoModeIcon sx={{ color: blueColor }} />
             </Button>
             <Button onClick={showInsights} sx={{ backgroundColor: whiteColor, borderRadius: "0 20px 20px 0" }}>
               <KeyboardDoubleArrowLeftIcon sx={{ color: blueColor }} />
-              <AnalyticsIcon sx={{ color: blueColor }}/>
+              <AnalyticsIcon sx={{ color: blueColor }} />
             </Button>
           </ButtonGroup>
         </Box>
@@ -108,12 +109,12 @@ function IslandButton({
             <Button onClick={restoreOriginal} sx={{ backgroundColor: whiteColor, borderRadius: "20px 0 0 20px" }}>
               <DeleteForeverIcon sx={{ color: redColor }} />
             </Button>
-            <Button onClick={runOptimization} sx={{ backgroundColor: whiteColor, borderRadius: "20px" }}>
+            <Button onClick={runOptimization} sx={{ backgroundColor: whiteColor }}>
               <AutoModeIcon sx={{ color: blueColor }} />
             </Button>
             <Button onClick={showInsights} sx={{ backgroundColor: whiteColor, borderRadius: "0 20px 20px 0" }}>
               <KeyboardDoubleArrowLeftIcon sx={{ color: blueColor }} />
-              <AnalyticsIcon sx={{ color: blueColor }}/>
+              <AnalyticsIcon sx={{ color: blueColor }} />
             </Button>
           </ButtonGroup>
         </Box>

@@ -1,10 +1,7 @@
-import React, { useState, useEffect } from "react";
-import IslandButton from "./IslandButton";
+import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "./Sidebar";
-import {
-  scrape,
-  injectPrompt,
-} from "./utils";
+import { scrape, injectPrompt } from "./utils";
+import PortalIslandButton from "./PortalIslandButton";
 
 function App() {
   const [alwaysShowInsights, setAlwaysShowInsights] = useState(true);
@@ -19,6 +16,16 @@ function App() {
   const [nodeStatusList, setNodeStatusList] = useState([]);
   const [sessionId] = useState(() => window.enhancerAPI?.getSessionId() || `session-${Date.now()}`);
 
+  // Create a stable reference for the setNodeStatusList function using useCallback
+  const updateNodeStatusList = useCallback((newNode) => {
+    console.log("Adding node to status list:", newNode);
+    setNodeStatusList(prev => {
+      const newList = [...prev, newNode];
+      console.log("Updated node list, now contains:", newList.length, "items");
+      return newList;
+    });
+  }, []);
+
   // Listen for node updates from background script via window.postMessage
   useEffect(() => {
     console.log("🚀 Setting up node update listener...");
@@ -32,19 +39,14 @@ function App() {
         console.log("📦 NODE COMPLETED EVENT RECEIVED:", node_name || node_type);
 
         // Add to status list
-        setNodeStatusList(prev => {
-          const newList = [
-            ...prev,
-            {
-              time: new Date().toLocaleTimeString(),
-              node_name: node_name || node_type,
-              node_type: node_type || node_name,
-              node_output: node_output
-            }
-          ];
-          console.log("Updated node list, now contains:", newList.length, "items");
-          return newList;
-        });
+        const newNode = {
+          time: new Date().toLocaleTimeString(),
+          node_name: node_name || node_type,
+          node_type: node_type || node_name,
+          node_output: node_output
+        };
+
+        updateNodeStatusList(newNode);
 
         // Handle specific nodes (PromptEvaluationNode, FinalAnswerNode, etc.)
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode") && node_output) {
@@ -54,9 +56,7 @@ function App() {
             setScore(newScore);
 
             if (node_output.justification) {
-              setScoreRationale(
-                node_output.justification
-              );
+              setScoreRationale(node_output.justification);
             }
 
             if (node_output.suggestions) {
@@ -85,6 +85,11 @@ function App() {
           }, 3000);
         }
       }
+
+      // Log other message types for debugging
+      if (event.data.type && event.data.type !== "NODE_COMPLETED") {
+        console.log("Other message received:", event.data.type);
+      }
     };
 
     window.addEventListener("message", handleMessage);
@@ -92,7 +97,7 @@ function App() {
       console.log("Removing node update listener");
       window.removeEventListener("message", handleMessage);
     };
-  }, [nodeOutput]);
+  }, [nodeOutput, updateNodeStatusList]);
 
   // Listen for settings updates
   useEffect(() => {
@@ -129,9 +134,26 @@ function App() {
       // Use the enhancerAPI if available, otherwise use fallback
       let data;
       if (window.enhancerAPI) {
-        data = await window.enhancerAPI.enhancePrompt(prompt, sessionId);
+        try {
+          data = await window.enhancerAPI.enhancePrompt(prompt, sessionId);
+          console.log("API call successful:", data);
+        } catch (apiError) {
+          console.error("API call failed:", apiError);
+          data = {
+            nodeOutput: `# Enhanced Prompt\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
+            _fallback: true
+          };
+        }
       } else if (window.callEnhancerAPI) {
-        data = await window.callEnhancerAPI(prompt, sessionId);
+        try {
+          data = await window.callEnhancerAPI(prompt, sessionId);
+        } catch (apiError) {
+          console.error("API call failed:", apiError);
+          data = {
+            nodeOutput: `# Enhanced Prompt\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
+            _fallback: true
+          };
+        }
       } else {
         // Last resort fallback
         console.error("⚠️ No API functions available. Using simple prompt enhancement.");
@@ -142,6 +164,12 @@ function App() {
       }
 
       console.log("✅ API call complete, received data:", data);
+
+      // Force sidebar to be visible if it's not already
+      if (!isSidebarVisible) {
+        console.log("Opening sidebar since it wasn't visible");
+        setIsSidebarVisible(true);
+      }
 
       // If we have an enhanced prompt, use it
       if (data.nodeOutput) {
@@ -197,14 +225,22 @@ function App() {
     setImprovementTips("");
     setNodeStatusList([]);
     setOptimizationRun((prev) => prev + 1);
-    if (alwaysShowInsights) {
-      setIsSidebarVisible(true);
-    }
+
+    // Always force sidebar visible when running optimization
+    setIsSidebarVisible(true);
+
     sendToEngine();
   };
 
-  const showInsights = () => setIsSidebarVisible(true);
-  const closeSidebar = () => setIsSidebarVisible(false);
+  const showInsights = () => {
+    console.log("showInsights called, setting sidebar to visible");
+    setIsSidebarVisible(true);
+  };
+
+  const closeSidebar = () => {
+    console.log("closeSidebar called, setting sidebar to hidden");
+    setIsSidebarVisible(false);
+  };
 
   // Function to get node data
   const getNodeData = (nodeName) => {
@@ -251,9 +287,14 @@ function App() {
     }
   };
 
+  // For debugging - log when isSidebarVisible changes
+  useEffect(() => {
+    console.log("isSidebarVisible changed to:", isSidebarVisible);
+  }, [isSidebarVisible]);
+
   return (
     <div>
-      <IslandButton
+      <PortalIslandButton
         alwaysShowInsights={alwaysShowInsights}
         isSidebarVisible={isSidebarVisible}
         runOptimization={runOptimization}
