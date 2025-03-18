@@ -278,5 +278,35 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 injectReactApp();
 sendSettingsToReact();
 
-// Debug info in console
-console.log('ChatGPT Enhancer content script loaded, session ID:', currentSessionId);
+function onSendClick() {
+    window.postMessage({ type: "SEND_BUTTON_CLICKED" }, "*");
+  }
+  
+
+  document.addEventListener(
+    "pointerdown",
+    (event) => {
+      const sendButton = event.target.closest(
+        'button[data-testid="send-button"][aria-label="Send prompt"]'
+      );
+      if (sendButton) {
+        console.log("Pointerdown event captured on send button.");
+        onSendClick();
+      }
+    },
+    true
+  );
+
+  document.addEventListener(
+    "keydown",
+    (event) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        const promptInput = event.target.closest('#prompt-textarea');
+        if (promptInput) {
+          console.log("Enter key pressed in prompt input (contenteditable div).");
+          onSendClick();
+        }
+      }
+    },
+    true
+  );
