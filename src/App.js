@@ -99,6 +99,8 @@ function App() {
     const handleMessage = (event) => {
       if (event.data?.type === "SETTINGS_UPDATE") {
         setAlwaysShowInsights(event.data.alwaysShowInsights);
+      } else if (event.data && event.data.type === "SEND_BUTTON_CLICKED") {
+        handleSendButtonClick();
       }
     };
 
@@ -179,6 +181,17 @@ function App() {
   // Reset everything when the user cancels
   const restoreOriginal = () => {
     injectPrompt(originalPrompt);
+    setOriginalPrompt("");
+    setNodeOutput("");
+    setScore(null);
+    setScoreRationale("");
+    setImprovementTips("");
+    setNodeStatusList([]);
+    setIsSidebarVisible(false);
+  };
+
+  const handleSendButtonClick = () => {
+    console.log("prompt sent");
     setOriginalPrompt("");
     setNodeOutput("");
     setScore(null);
