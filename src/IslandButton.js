@@ -29,6 +29,7 @@ function IslandButton({
   // No position or transform properties - just let the button stay where it's placed in the ChatGPT interface
   const containerStyle = {
     zIndex: 10000,
+    marginTop: "-2px"
   };
 
   const buttonGroupStyle = {
