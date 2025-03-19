@@ -1,15 +1,13 @@
-/* General Styles */
 body {
     font-family: Arial, sans-serif;
     padding: 16px;
-    width: 340px; /* Adjusted for popup UI */
-    background: #f8f9fa; /* Light theme */
-    color: #333; /* Dark text */
+    width: 340px; 
+    background: #f8f9fa; 
+    color: #333; 
     border-radius: 12px;
     box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.1);
 }
 
-/* Popup Container */
 .popup-container {
     display: flex;
     flex-direction: column;
@@ -17,17 +15,66 @@ body {
     padding: 10px;
 }
 
-/* Header */
 .popup-header {
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: center;
+    text-align: center;
     width: 100%;
     font-size: 18px;
     font-weight: bold;
     margin-bottom: 10px;
+    align-self: center;
 }
 
+
 .logo {
+    font-size: 1.8em;
+    font-weight: bold;
     color: #007DE0;
+    align-items: center;
+    text-align: center;
+}
+
+.footer {
+    margin-top: 10px; 
+    padding-top: 5px; 
+    text-align: center;
+    font-size: 0.9em;
+}
+.footer p {
+    margin: 4px 0;
+}
+.footer a {
+    color: #007bff;
+    text-decoration: none;
+}
+
+.toggle-container {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 0;
+    border-bottom: 1px solid #e0e0e0;
+    margin-bottom: 12px;
+    gap: 10px;
+}
+.toggle-info {
+max-width: 95%;
+}
+.toggle-info label {
+font-size: 1em;
+color: #333;
+font-weight: 600;
+display: block;
+}
+.toggle-info .toggle-description {
+font-size: 0.85em;
+color: #777;
+margin-top: 4px;
+}
+input[type="checkbox"] {
+width: 20px;
+height: 20px;
+accent-color: #007bff;
+cursor: pointer;
 }
