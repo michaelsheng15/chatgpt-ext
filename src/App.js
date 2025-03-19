@@ -120,6 +120,12 @@ function App() {
     console.log("🚀 Starting optimization process");
 
     try {
+      // Force sidebar to be visible if it's not already
+      if (!isSidebarVisible) {
+        console.log("Opening sidebar since it wasn't visible");
+        setIsSidebarVisible(true);
+      }
+      
       const prompt = scrape();
       if (!prompt) {
         console.error("⚠️ No prompt found");
@@ -141,37 +147,19 @@ function App() {
           console.log("API call successful:", data);
         } catch (apiError) {
           console.error("API call failed:", apiError);
-          data = {
-            nodeOutput: `# Enhanced Prompt\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
-            _fallback: true
-          };
         }
       } else if (window.callEnhancerAPI) {
         try {
           data = await window.callEnhancerAPI(prompt, sessionId);
         } catch (apiError) {
           console.error("API call failed:", apiError);
-          data = {
-            nodeOutput: `# Enhanced Prompt\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
-            _fallback: true
-          };
         }
       } else {
         // Last resort fallback
         console.error("⚠️ No API functions available. Using simple prompt enhancement.");
-        data = {
-          nodeOutput: `# Task\n${prompt}\n\n# Desired Output\n- Clear, well-structured response\n- Accurate information\n\n# Context\nPlease be thorough in your response.`,
-          _fallback: true
-        };
       }
 
       console.log("✅ API call complete, received data:", data);
-
-      // Force sidebar to be visible if it's not already
-      if (!isSidebarVisible) {
-        console.log("Opening sidebar since it wasn't visible");
-        setIsSidebarVisible(true);
-      }
 
       // If we have an enhanced prompt, use it
       if (data.nodeOutput) {
