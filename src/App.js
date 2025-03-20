@@ -26,12 +26,6 @@ function App() {
     });
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && nodeOutput) {
-      console.log("Injecting optimized prompt after loading completed");
-      injectPrompt(nodeOutput);
-    }
-  }, [isLoading, nodeOutput]);
   
 
   // Listen for node updates from background script via window.postMessage
@@ -79,6 +73,10 @@ function App() {
         if ((node_name === "PromptEnhancerNode" || node_type === "PromptEnhancerNode") && node_output) {
           console.log("📝 Setting enhanced prompt from node output");
           setNodeOutput(node_output);
+           // Only inject the prompt if we haven't already done so
+           if (!nodeOutput) {
+            injectPrompt(node_output);
+          }         
         }
 
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
@@ -169,6 +167,7 @@ function App() {
       if (data.nodeOutput) {
         console.log("📝 Setting enhanced prompt");
         setNodeOutput(data.nodeOutput);
+        injectPrompt(nodeOutput);
       }
 
       // If no WebSocket updates were received, handle it here
