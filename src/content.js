@@ -274,9 +274,13 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     return true;
 });
 
-// Initialize
-injectReactApp();
-sendSettingsToReact();
+window.addEventListener("load", () => {
+    setTimeout(() => {
+      injectReactApp();
+      sendSettingsToReact();
+    }, 2000);
+  });
+  
 
 function onSendClick() {
     window.postMessage({ type: "SEND_BUTTON_CLICKED" }, "*");

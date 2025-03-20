@@ -1,5 +1,5 @@
 import React from "react";
-import { Box, Button, ButtonGroup } from "@mui/material";
+import { Box, Button, ButtonGroup, CircularProgress } from "@mui/material";
 import DeleteForeverIcon from '@mui/icons-material/DeleteForever';
 import AutoFixHighIcon from '@mui/icons-material/AutoFixHigh';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
@@ -99,7 +99,7 @@ function IslandButton({
       return (
         <Box sx={containerStyle}>
           <Button variant="contained" sx={{ backgroundColor: whiteColor, border: `2px solid ${blueColor}` }}>
-            <AutoFixHighIcon sx={{ color: blueColor }} />
+            <CircularProgress size={24} sx={{ color: blueColor }} />
           </Button>
         </Box>
       );
