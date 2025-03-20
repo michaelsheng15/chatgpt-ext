@@ -26,8 +26,6 @@ function App() {
     });
   }, []);
 
-  
-
   // Listen for node updates from background script via window.postMessage
   useEffect(() => {
     console.log("🚀 Setting up node update listener...");
@@ -73,10 +71,10 @@ function App() {
         if ((node_name === "PromptEnhancerNode" || node_type === "PromptEnhancerNode") && node_output) {
           console.log("📝 Setting enhanced prompt from node output");
           setNodeOutput(node_output);
-           // Only inject the prompt if we haven't already done so
-           if (!nodeOutput) {
+          // Only inject the prompt if we haven't already done so
+          if (!nodeOutput) {
             injectPrompt(node_output);
-          }         
+          }  
         }
 
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
@@ -167,7 +165,7 @@ function App() {
       if (data.nodeOutput) {
         console.log("📝 Setting enhanced prompt");
         setNodeOutput(data.nodeOutput);
-        injectPrompt(nodeOutput);
+        injectPrompt(data.nodeOutput);
       }
 
       // If no WebSocket updates were received, handle it here
