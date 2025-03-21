@@ -5,19 +5,18 @@
 document.addEventListener("DOMContentLoaded", () => {
     const toggle = document.getElementById("insightsToggle");
 
-    chrome.storage.sync.get(["alwaysShowInsights", "firstRun"], (data) => {
-        if (data.firstRun === true) {
-            chrome.storage.sync.set({ firstRun: false }, () => {
-                console.log("Popup opened: firstRun reset to false.");
-            });
-            chrome.storage.sync.set({ alwaysShowInsights: true }, () => {
-                toggle.checked = true;
-            });
+    chrome.storage.sync.get("alwaysShowInsights", (data) => {
+        if (data.alwaysShowInsights === undefined) {
+          chrome.storage.sync.set({ alwaysShowInsights: true }, () => {
+            toggle.checked = true;
+            console.log("Initialized alwaysShowInsights to true.");
+          });
         } else {
-            toggle.checked = data.alwaysShowInsights ?? true;
-            console.log("Loaded stored setting: alwaysShowInsights =", toggle.checked);
+          toggle.checked = data.alwaysShowInsights;
+          console.log("Loaded alwaysShowInsights:", data.alwaysShowInsights);
         }
-    });
+      });
+      
 
     toggle.addEventListener("change", () => {
         chrome.storage.sync.set({ alwaysShowInsights: toggle.checked });
