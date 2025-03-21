@@ -74,7 +74,7 @@ function App() {
           // Only inject the prompt if we haven't already done so
           if (!nodeOutput) {
             injectPrompt(node_output);
-          }
+          }  
         }
 
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
@@ -121,7 +121,7 @@ function App() {
 
     try {
       // Force sidebar to be visible if it's not already
-      if (!isSidebarVisible) {
+      if (!isSidebarVisible && alwaysShowInsights == true) {
         console.log("Opening sidebar since it wasn't visible");
         setIsSidebarVisible(true);
       }
@@ -226,9 +226,6 @@ function App() {
     setImprovementTips("");
     setNodeStatusList([]);
     setOptimizationRun((prev) => prev + 1);
-
-    // Always force sidebar visible when running optimization
-    setIsSidebarVisible(true);
 
     sendToEngine();
   };
