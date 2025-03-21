@@ -98,9 +98,9 @@ function IslandButton({
     if (isLoading) {
       return (
         <Box sx={containerStyle}>
-          <Button variant="contained" sx={{ backgroundColor: whiteColor, border: `2px solid ${blueColor}` }}>
-            <CircularProgress size={24} sx={{ color: blueColor }} />
-          </Button>
+            <Button variant="contained" sx={{ backgroundColor: whiteColor, border: `2px solid ${blueColor}`,borderRadius: "20px"}}>
+              <CircularProgress size={24} sx={{ color: blueColor }} />
+            </Button>
         </Box>
       );
     } else if (score !== null) {
