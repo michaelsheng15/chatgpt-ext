@@ -2,7 +2,6 @@ import React, { useState, useEffect, useCallback } from "react";
 import Sidebar from "./Sidebar";
 import { scrape, injectPrompt } from "./utils";
 import PortalIslandButton from "./PortalIslandButton";
-
 function App() {
   const [alwaysShowInsights, setAlwaysShowInsights] = useState(true);
   const [isSidebarVisible, setIsSidebarVisible] = useState(false);
@@ -209,11 +208,6 @@ function App() {
   const handleSendButtonClick = () => {
     console.log("prompt sent");
     setOriginalPrompt("");
-    setNodeOutput("");
-    setScore(null);
-    setScoreRationale("");
-    setImprovementTips("");
-    setNodeStatusList([]);
     setIsSidebarVisible(false);
   };
 

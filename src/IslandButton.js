@@ -82,17 +82,27 @@ function IslandButton({
         </Box>
       );
     } else {
-      return (
-        <Box sx={containerStyle}>
-          <Button
-            onClick={runOptimization}
-            variant="contained"
-            sx={{ backgroundColor: whiteColor, borderRadius: "20px", border: `2px solid ${blueColor}` }}
-          >
-            <AutoFixHighIcon sx={{ color: blueColor }} />
-          </Button>
-        </Box>
-      );
+      if (isLoading){
+        return (
+          <Box sx={containerStyle}>
+              <Button variant="contained" sx={{ backgroundColor: whiteColor, border: `2px solid ${blueColor}`,borderRadius: "20px"}}>
+                <CircularProgress size={24} sx={{ color: blueColor }} />
+              </Button>
+          </Box>
+        );
+      } else {
+        return (
+          <Box sx={containerStyle}>
+            <Button
+              onClick={runOptimization}
+              variant="contained"
+              sx={{ backgroundColor: whiteColor, borderRadius: "20px", border: `2px solid ${blueColor}` }}
+            >
+              <AutoFixHighIcon sx={{ color: blueColor }} />
+            </Button>
+          </Box>
+        );
+      }
     }
   } else {
     if (isLoading) {
