@@ -71,6 +71,15 @@ function Sidebar({
   };
 
   const renderNodeOutput = (node) => {
+    // If node has change_text from backend, use that
+    if (node.change_text) {
+      return (
+        <Typography variant="body2">
+          {node.change_text}
+        </Typography>
+      );
+    }
+
     const output = node.node_output;
 
     if (typeof output === 'string') {
@@ -85,7 +94,7 @@ function Sidebar({
       return null;
     }
 
-    // For different node types
+    // For different node types (fallback if change_text not available)
     switch (node.node_type || node.node_name) {
       case "CategorizePromptNode":
         return (

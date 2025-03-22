@@ -4,67 +4,7 @@ import { Box, Typography, Paper } from "@mui/material";
 function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
   const [isExpanded, setIsExpanded] = useState(false);
   const [changeText, setChangeText] = useState(null);
-  const [reasonText, setReasonText] = useState(null);
   const [nodeData, setNodeData] = useState(null);
-
-  // Function to extract node-specific data and format it
-  const extractNodeData = (data) => {
-    if (!data) return { changeText: null, reasonText: null };
-
-    let changeText = "";
-    let reasonText = "";
-
-    // Handle different node types with different data structures
-    switch (nodeName) {
-      case "CategorizePromptNode":
-        // For category, data is a string directly
-        if (data) {
-          changeText = `Prompt categorized as: ${data}`;
-          reasonText = `Category determines the enhancement approach`;
-        }
-        break;
-
-      case "RephraseNode":
-        // For rephrase, data is a string with the rephrased question
-        if (data) {
-          changeText = `Prompt rephrased for better AI understanding`;
-          reasonText = `Improved clarity and structure`;
-        }
-        break;
-
-      case "PromptEnhancerNode":
-        // For enhancer, data is the enhanced prompt as a string
-        if (data) {
-          changeText = `Prompt enhanced with best practices`;
-          reasonText = `Added structure, clarity, and precise instructions`;
-        }
-        break;
-
-      case "PromptEvaluationNode":
-        // For evaluation, data is an object with scores and suggestions
-        if (data && data.overall_score) {
-          changeText = `Prompt evaluation score: ${(data.overall_score * 10).toFixed(0)}/100`;
-          reasonText = data.scores ?
-            `Scores: ${Object.entries(data.scores)
-              .map(([dim, score]) => `${dim}: ${score}/10`)
-              .join(', ')}` :
-            `Evaluation complete`;
-        }
-        break;
-
-      default:
-        // Default handler for any other node types
-        if (typeof data === 'string') {
-          changeText = `Processing ${nodeLabel || nodeName}`;
-          reasonText = data;
-        } else if (data) {
-          changeText = `Processing ${nodeLabel || nodeName}`;
-          reasonText = `Node processing completed`;
-        }
-    }
-
-    return { changeText, reasonText };
-  };
 
   // useEffect to fetch node data
   useEffect(() => {
@@ -74,9 +14,9 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
         setNodeData(data);
 
         if (data) {
-          const { changeText, reasonText } = extractNodeData(data);
-          setChangeText(changeText);
-          setReasonText(reasonText);
+          // Use the change_text from backend if available or generate a fallback
+          const backendChangeText = data.change_text || generateFallbackChangeText(nodeName, data);
+          setChangeText(backendChangeText);
         }
       } catch (error) {
         console.error(`Error fetching data for ${nodeName}:`, error);
@@ -86,15 +26,35 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
     getNodeData();
   }, [fetchNodeData, nodeName, nodeLabel]);
 
+  // Generate fallback change text if backend doesn't provide it
+  const generateFallbackChangeText = (nodeName, data) => {
+    switch (nodeName) {
+      case "CategorizePromptNode":
+        return data ? `Prompt categorized as: ${data}` : null;
+      case "RephraseNode":
+        return data ? "Prompt rephrased for better AI understanding" : null;
+      case "PromptEnhancerNode":
+        return data ? "Prompt enhanced with best practices" : null;
+      case "PromptEvaluationNode":
+        return data && data.overall_score ?
+          `Prompt evaluation score: ${(data.overall_score * 10).toFixed(0)}/100` :
+          data && data.score ?
+            `Prompt evaluation score: ${data.score}/100` :
+            null;
+      default:
+        return data ? `Processing ${nodeLabel || nodeName}` : null;
+    }
+  };
+
   const handleToggle = () => {
-    // Only toggle if the data is ready (both changeText and reasonText exist or nodeData exists)
-    if ((changeText && reasonText) || nodeData !== null) {
+    // Only toggle if the data is ready
+    if (changeText || nodeData !== null) {
       setIsExpanded((prev) => !prev);
     }
   };
 
   // Determine if we have valid data to display
-  const hasData = (changeText && reasonText) || nodeData !== null;
+  const hasData = changeText || nodeData !== null;
 
   // Function to render additional node-specific content
   const renderNodeContent = () => {
@@ -115,7 +75,7 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
           <Box sx={{ mt: 1, p: 1, backgroundColor: "#f5f5f5", borderRadius: 1 }}>
             <Typography variant="body2" sx={{ wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
               {typeof nodeData === 'string'
-                ? (nodeData.length > 150 ? `${nodeData.substring(0, 150)}...` : nodeData)
+                ? nodeData
                 : JSON.stringify(nodeData)}
             </Typography>
           </Box>
@@ -167,10 +127,7 @@ function NodeBlock({ nodeName, nodeLabel, fetchNodeData }) {
       {isExpanded && (
         <Box sx={{ mt: 1 }}>
           <Typography variant="body2">
-            <strong>What Changed:</strong> {changeText}
-          </Typography>
-          <Typography variant="body2">
-            <strong>Why:</strong> {reasonText}
+            {changeText}
           </Typography>
 
           {/* Additional node-specific content */}
