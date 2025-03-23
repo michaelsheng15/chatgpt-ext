@@ -241,6 +241,36 @@ window.addEventListener('message', async (event) => {
     }
 });
 
+function handleKeyboardShortcuts(event) {
+    // Check for Command+Enter (Mac) or Ctrl+Enter (Windows/Linux)
+    if (event.key === 'Enter' && (event.metaKey || event.ctrlKey)) {
+        console.log("Command+Enter or Ctrl+Enter detected");
+        // Dispatch the same message that clicking the island button would
+        window.postMessage({ type: "OPTIMIZE_BUTTON_CLICKED" }, "*");
+        // Prevent default behavior
+        event.preventDefault();
+    }
+}
+
+// Add the keyboard shortcut listener
+document.addEventListener('keydown', handleKeyboardShortcuts, true);
+
+// Update the existing keyboard listener to avoid conflicts
+document.addEventListener(
+    "keydown",
+    (event) => {
+        // Only trigger this for regular Enter without Command key
+        if (event.key === "Enter" && !event.shiftKey && !event.metaKey && !event.ctrlKey) {
+            const promptInput = event.target.closest('#prompt-textarea');
+            if (promptInput) {
+                console.log("Enter key pressed in prompt input (contenteditable div).");
+                onSendClick();
+            }
+        }
+    },
+    true
+);
+
 // Forward messages from background script to page
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     // Only handle messages from our background script
@@ -276,41 +306,41 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 
 window.addEventListener("load", () => {
     setTimeout(() => {
-      injectReactApp();
-      sendSettingsToReact();
+        injectReactApp();
+        sendSettingsToReact();
     }, 2000);
-  });
-  
+});
+
 
 function onSendClick() {
     window.postMessage({ type: "SEND_BUTTON_CLICKED" }, "*");
-  }
-  
+}
 
-  document.addEventListener(
+
+document.addEventListener(
     "pointerdown",
     (event) => {
-      const sendButton = event.target.closest(
-        'button[data-testid="send-button"][aria-label="Send prompt"]'
-      );
-      if (sendButton) {
-        console.log("Pointerdown event captured on send button.");
-        onSendClick();
-      }
+        const sendButton = event.target.closest(
+            'button[data-testid="send-button"][aria-label="Send prompt"]'
+        );
+        if (sendButton) {
+            console.log("Pointerdown event captured on send button.");
+            onSendClick();
+        }
     },
     true
-  );
+);
 
-  document.addEventListener(
+document.addEventListener(
     "keydown",
     (event) => {
-      if (event.key === "Enter" && !event.shiftKey) {
-        const promptInput = event.target.closest('#prompt-textarea');
-        if (promptInput) {
-          console.log("Enter key pressed in prompt input (contenteditable div).");
-          onSendClick();
+        if (event.key === "Enter" && !event.shiftKey) {
+            const promptInput = event.target.closest('#prompt-textarea');
+            if (promptInput) {
+                console.log("Enter key pressed in prompt input (contenteditable div).");
+                onSendClick();
+            }
         }
-      }
     },
     true
-  );
+);

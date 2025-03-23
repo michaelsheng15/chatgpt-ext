@@ -73,7 +73,7 @@ function App() {
           // Only inject the prompt if we haven't already done so
           if (!nodeOutput) {
             injectPrompt(node_output);
-          }  
+          }
         }
 
         if ((node_name === "PromptEvaluationNode" || node_type === "PromptEvaluationNode")) {
@@ -98,19 +98,23 @@ function App() {
     };
   }, [nodeOutput, updateNodeStatusList]);
 
-  // Listen for settings updates
   useEffect(() => {
     const handleMessage = (event) => {
       if (event.data?.type === "SETTINGS_UPDATE") {
         setAlwaysShowInsights(event.data.alwaysShowInsights);
       } else if (event.data && event.data.type === "SEND_BUTTON_CLICKED") {
         handleSendButtonClick();
+      } else if (event.data && event.data.type === "OPTIMIZE_BUTTON_CLICKED") {
+        setIsSidebarVisible(true);
+        setTimeout(() => {
+          runOptimization();
+        }, 25);
       }
     };
 
     window.addEventListener("message", handleMessage);
     return () => window.removeEventListener("message", handleMessage);
-  }, []);
+  }, [isSidebarVisible]);
 
   // Main function to send prompt to engine
   const sendToEngine = async () => {
@@ -124,7 +128,7 @@ function App() {
         console.log("Opening sidebar since it wasn't visible");
         setIsSidebarVisible(true);
       }
-      
+
       const prompt = scrape();
       if (!prompt) {
         console.error("⚠️ No prompt found");
@@ -205,15 +209,16 @@ function App() {
     setIsSidebarVisible(false);
   };
 
-  const handleSendButtonClick = () => {
+  const handleSendButtonClick = useCallback(() => {
     console.log("prompt sent");
     setOriginalPrompt("");
     setIsSidebarVisible(false);
-  };
+  }, []);
 
   // Reset everything when the user runs optimize again
-  const runOptimization = () => {
+  const runOptimization = useCallback(() => {
     setOriginalPrompt("");
+    setIsSidebarVisible(true);
     setNodeOutput("");
     setScore(null);
     setScoreRationale("");
@@ -221,8 +226,10 @@ function App() {
     setNodeStatusList([]);
     setOptimizationRun((prev) => prev + 1);
 
-    sendToEngine();
-  };
+    setTimeout(() => {
+      sendToEngine();
+    }, 25);
+  }, []);
 
   const showInsights = () => {
     console.log("showInsights called, setting sidebar to visible");
