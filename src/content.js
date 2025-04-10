@@ -31,14 +31,16 @@ function ensureOptimizeContainer() {
     // Find the parent container that has the audio icon
     // Looking at the bottom container with buttons
     // const bottomContainer = document.querySelector("div.mb-2.mt-1.flex.items-center.justify-between.sm\\:mt-5");
-    const bottomContainer = document.querySelector('div.bg-primary-surface-primary.absolute.bottom-\\[9px\\].left-\\[17px\\].right-0.z-\\[2\\].flex.items-center');
+    const bottomContainer = document.querySelector("div.flex.items-center.gap-2.overflow-x-auto");
     if (!bottomContainer) {
         console.log("Bottom container not found");
         return;
     }
 
     // Find the right side of the container where the audio icon is
-    const rightSideContainer = document.querySelector("div.absolute.bottom-1.right-3.flex.items-center.gap-2");
+    // const rightSideContainer = document.querySelector("div.absolute.bottom-1.right-3.flex.items-center.gap-2");
+    const rightSideContainer = document.querySelector("div.absolute.end-3.bottom-0.flex.items-center.gap-2");
+
     if (!rightSideContainer) {
         console.log("Right side container not found");
         return;
